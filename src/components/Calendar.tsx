@@ -229,17 +229,13 @@ export default function Calendar() {
           <button 
             onClick={handleNextMonth} 
             disabled={currentYear === schoolYearStart + 1 && currentMonth === 5}
-            className="p-2 hover:bg-slate-100 rounded-full transition disabled:opacity-30 disabled:cursor-not-allowed"
-          >&rarr;</button>
-        </div>
-
-        <div className="grid grid-cols-7 gap-2 mb-2 text-center text-sm font-semibold text-slate-500">
+            className="p-2 hover:bg-slate-100 rounded-full transition disabled:opacity-30 disabled        <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center text-sm font-semibold text-slate-500">
           {dayNames.map(day => <div key={day}>{day}</div>)}
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-            <div key={`empty-${i}`} className="p-4" />
+            <div key={`empty-${i}`} className="p-2 sm:p-4" />
           ))}
           {Array.from({ length: daysInMonth }).map((_, i) => {
             const day = i + 1;
@@ -266,22 +262,22 @@ export default function Calendar() {
             
             const isBlocked = isWeekend || (event && event.blockReservation) || tooClose || isGroupReserved || !formData.group || !!adminBlocked;
 
-            let btnClasses = "relative p-1 min-h-[90px] rounded-xl flex flex-col items-center justify-start text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 border ";
+            let btnClasses = "relative aspect-square flex flex-col items-center justify-start p-[4%] font-medium rounded-md sm:rounded-xl transition-transform overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 border ";
             
             if (isSelected) {
-              btnClasses += "bg-blue-600 text-white shadow-md border-blue-600 font-bold ";
+              btnClasses += "bg-blue-600 text-white shadow-md border-blue-600 font-bold scale-105 ";
             } else if (event) {
-              btnClasses += `${colorStyles[event.color]} font-bold shadow-sm `;
+              btnClasses += `${colorStyles[event.color]} font-bold shadow-sm hover:scale-105 border-transparent `;
             } else if (adminBlocked) {
               btnClasses += "bg-slate-700 text-slate-300 border-slate-800 cursor-not-allowed ";
             } else if (isGroupReserved) {
               btnClasses += "bg-slate-700 text-white font-bold border-slate-800 opacity-90 hover:opacity-100 ";
             } else if (isWeekend) {
-              btnClasses += "bg-slate-200 text-slate-500 border-slate-300 hover:bg-slate-300 ";
+              btnClasses += "bg-slate-200 text-slate-500 border-slate-300 ";
             } else if (tooClose || !formData.group) {
               btnClasses += "bg-slate-50 text-slate-400 border-slate-200 opacity-50 cursor-not-allowed ";
             } else {
-              btnClasses += "bg-white text-slate-700 hover:bg-blue-50 border-slate-100 ";
+              btnClasses += "bg-white text-slate-700 hover:bg-slate-50 border-slate-100 hover:scale-105 ";
             }
             
             return (
@@ -290,25 +286,40 @@ export default function Calendar() {
                 onClick={() => !isBlocked && handleDateClick(day)}
                 disabled={isBlocked}
                 className={btnClasses}
+                style={{ containerType: 'inline-size' }}
               >
-                <span className="text-lg mt-1">{day}</span>
+                <span 
+                  className="font-bold"
+                  style={{ fontSize: 'clamp(0.8rem, 28cqi, 4rem)', marginBottom: (event || adminBlocked || isGroupReserved) ? '4cqi' : '0' }}
+                >
+                  {day}
+                </span>
                 {event && !adminBlocked && (
-                  <span className={`text-[10px] sm:text-xs mt-1 leading-tight w-full px-1 break-words text-center ${isSelected ? 'text-white' : textColors[event.color] || 'text-amber-100'}`}>
+                  <span 
+                    className={`w-full px-1 break-words text-center font-semibold ${isSelected ? 'text-white' : textColors[event.color] || 'text-amber-100'}`}
+                    style={{ fontSize: 'clamp(0.45rem, 16cqi, 1.5rem)', lineHeight: '1.1' }}
+                  >
                     {event.title}
                   </span>
                 )}
                 {adminBlocked && (
-                  <span className="text-[10px] sm:text-xs mt-1 leading-tight w-full px-1 break-words text-center text-slate-400 font-bold">
+                  <span 
+                    className="w-full px-1 break-words text-center text-slate-400 font-bold"
+                    style={{ fontSize: 'clamp(0.45rem, 16cqi, 1.5rem)', lineHeight: '1.1' }}
+                  >
                     {adminBlocked.reason || "Bloqueado"}
                   </span>
                 )}
                 {isGroupReserved && !event && !adminBlocked && (
-                  <span className="text-[10px] sm:text-xs mt-1 leading-tight w-full px-1 break-words text-center text-slate-200">
+                  <span 
+                    className="w-full px-1 break-words text-center text-slate-200"
+                    style={{ fontSize: 'clamp(0.45rem, 16cqi, 1.5rem)', lineHeight: '1.1' }}
+                  >
                     Ocupado
                   </span>
                 )}
               </button>
-            )
+            );
           })}
         </div>
       </div>

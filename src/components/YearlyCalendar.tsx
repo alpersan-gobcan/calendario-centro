@@ -34,7 +34,8 @@ const colorStyles: Record<string, string> = {
   emerald: "bg-emerald-400 text-white hover:bg-emerald-500",
   purple: "bg-purple-400 text-white hover:bg-purple-500",
   amber: "bg-amber-400 text-white hover:bg-amber-500",
-  cyan: "bg-cyan-500 text-white hover:bg-cyan-600", // Para salidas
+  cyan: "bg-cyan-500 text-white hover:bg-cyan-600",
+  indigo: "bg-indigo-400 text-white hover:bg-indigo-500",
 };
 
 const textColors: Record<string, string> = {
@@ -44,6 +45,7 @@ const textColors: Record<string, string> = {
   purple: "text-purple-500",
   amber: "text-amber-500",
   cyan: "text-cyan-600",
+  indigo: "text-indigo-500",
 };
 
 const months = [
@@ -83,7 +85,7 @@ export default function YearlyCalendar() {
     "Visita de Familias": { type: "familias", color: "purple", filterKey: "familias" },
     "Sesiones de evaluación": { type: "evaluacion", color: "emerald", filterKey: "evaluacion" },
     "Entrega de Boletines": { type: "boletines", color: "blue", filterKey: "boletines" },
-    "Días relevantes": { type: "relevantes", color: "amber", filterKey: "relevantes" },
+    "Días relevantes": { type: "relevantes", color: "indigo", filterKey: "relevantes" },
   };
 
   const [isLoading, setIsLoading] = useState(true);
@@ -194,7 +196,18 @@ export default function YearlyCalendar() {
             settings.blockedDays.forEach(b => {
               const d = new Date(b.dateStr);
               if (d.getFullYear() === m.year && d.getMonth() === m.month) {
-                 const cat = categoryMap[b.type || "Días relevantes"] || categoryMap["Días relevantes"];
+                 const typeStr = b.type || "Días relevantes";
+                 let catKey = "Días relevantes";
+                 
+                 const lowerType = typeStr.toLowerCase();
+                 if (lowerType.includes("festivo") || lowerType.includes("vacaciones")) catKey = "Festivos y Vacaciones";
+                 else if (lowerType.includes("efeméride") || lowerType.includes("efemeride")) catKey = "Efemérides";
+                 else if (lowerType.includes("familia")) catKey = "Visita de Familias";
+                 else if (lowerType.includes("evaluaci")) catKey = "Sesiones de evaluación";
+                 else if (lowerType.includes("boletin")) catKey = "Entrega de Boletines";
+                 else if (lowerType.includes("salida")) catKey = "Salidas";
+
+                 const cat = categoryMap[catKey] || categoryMap["Días relevantes"];
                  if (filters[cat.filterKey]) {
                     eventsInMonth.push({
                       dateStr: b.dateStr,
