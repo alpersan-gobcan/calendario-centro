@@ -70,7 +70,7 @@ export default function Calendar() {
   
   // Estado local
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7 });
+  const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
   const [modalEvent, setModalEvent] = useState<{ dateStr: string, title: string, details: string, blockReservation?: boolean, dateObj: Date } | null>(null);
 
   useEffect(() => {
