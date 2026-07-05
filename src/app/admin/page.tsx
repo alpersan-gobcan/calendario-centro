@@ -99,9 +99,18 @@ export default function AdminPage() {
 
   const handleClearAllBlocks = async () => {
     if (confirm("¿Estás seguro de borrar todos los días significativos? Esta acción no se puede deshacer.")) {
+      const allBaseEvents = [
+        "2026-09-08", "2026-09-10", "2026-09-11", "2026-09-16", "2026-09-30",
+        "2026-10-12", "2026-10-15", "2026-10-30", "2026-11-02", "2026-12-07",
+        "2026-12-08", "2026-12-18", "2027-01-28", "2027-01-29", "2027-02-16",
+        "2027-02-17", "2027-02-18", "2027-04-30", "2027-05-01", "2027-05-28",
+        "2027-05-29"
+      ];
+      
       const updatedSettings = {
         ...settings,
-        blockedDays: []
+        blockedDays: [],
+        hiddenBaseEvents: allBaseEvents
       };
       setSettings(updatedSettings);
       await store.saveSettings(updatedSettings);
