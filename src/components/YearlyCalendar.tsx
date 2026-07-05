@@ -28,10 +28,6 @@ const specialEvents: Record<string, { title: string, details: string, blockReser
   "2027-05-29": { title: "Libre disp.", details: "Libre disposición.", blockReservation: true, color: "emerald", type: "festivo" },
 };
 
-for (let i = 23; i <= 31; i++) specialEvents[`2026-12-${i}`] = { title: "Navidad", details: "Vacaciones", blockReservation: true, color: "blue", type: "festivo" };
-for (let i = 1; i <= 10; i++) specialEvents[`2027-01-${i.toString().padStart(2, '0')}`] = { title: "Navidad", details: "Vacaciones", blockReservation: true, color: "blue", type: "festivo" };
-for (let i = 22; i <= 26; i++) specialEvents[`2027-03-${i}`] = { title: "Semana Santa", details: "Semana Santa", blockReservation: true, color: "blue", type: "festivo" };
-
 const colorStyles: Record<string, string> = {
   rose: "bg-rose-400 text-white hover:bg-rose-500",
   blue: "bg-blue-400 text-white hover:bg-blue-500",

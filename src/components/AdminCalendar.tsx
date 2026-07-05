@@ -28,10 +28,7 @@ const specialEvents: Record<string, { title: string, details: string, blockReser
   "2027-05-29": { title: "Libre disposición", details: "Día de libre disposición.", blockReservation: true, color: "emerald" },
 };
 
-// Añadir vacaciones
-for (let i = 23; i <= 31; i++) specialEvents[`2026-12-${i}`] = { title: "Navidad", details: "Vacaciones de Navidad", blockReservation: true, color: "blue" };
-for (let i = 1; i <= 10; i++) specialEvents[`2027-01-${i.toString().padStart(2, '0')}`] = { title: "Navidad", details: "Vacaciones de Navidad", blockReservation: true, color: "blue" };
-for (let i = 22; i <= 26; i++) specialEvents[`2027-03-${i}`] = { title: "Semana Santa", details: "Semana Santa", blockReservation: true, color: "blue" };
+// Vacaciones borradas a petición del usuario.
 
 export default function AdminCalendar({ 
   reservations, 

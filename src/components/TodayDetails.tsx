@@ -27,18 +27,22 @@ const specialEvents: Record<string, { title: string, details: string, color: str
   "2027-05-29": { title: "Libre disp.", details: "Libre disposición.", color: "emerald" },
 };
 
-// Add vacations
-for (let i = 23; i <= 31; i++) specialEvents[`2026-12-${i}`] = { title: "Navidad", details: "Vacaciones", color: "blue" };
-for (let i = 1; i <= 10; i++) specialEvents[`2027-01-${i.toString().padStart(2, '0')}`] = { title: "Navidad", details: "Vacaciones", color: "blue" };
-for (let i = 22; i <= 26; i++) specialEvents[`2027-03-${i}`] = { title: "Semana Santa", details: "Semana Santa", color: "blue" };
+// Vacaciones borradas a petición del usuario.
 
 export default function TodayDetails() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [] });
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    store.getReservations().then(setReservations);
-    store.getSettings().then(setSettings);
+    Promise.all([
+      store.getReservations(),
+      store.getSettings()
+    ]).then(([res, set]) => {
+      setReservations(res);
+      setSettings(set);
+      setIsLoading(false);
+    });
   }, []);
 
   const today = new Date();
@@ -52,6 +56,14 @@ export default function TodayDetails() {
   
   const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   const formattedDate = today.toLocaleDateString('es-ES', options);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white p-6 sm:p-10 lg:p-14 rounded-3xl shadow-sm border border-blue-100 mb-12 w-full max-w-7xl mx-auto px-4 lg:px-8 flex justify-center items-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-6 sm:p-10 lg:p-14 rounded-3xl shadow-sm border border-blue-100 mb-12 w-full max-w-7xl mx-auto px-4 lg:px-8">
