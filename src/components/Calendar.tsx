@@ -55,7 +55,7 @@ export default function Calendar() {
   const schoolYearStart = currentMonthIdx < 6 ? currentYearActual - 1 : currentYearActual;
 
   const [currentDate, setCurrentDate] = useState(new Date(schoolYearStart, 8, 1));
-  const [selectedDate, setSelectedDate] = useState<number | null>(null);
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
   
   // Datos del formulario
   const [formData, setFormData] = useState({ 
@@ -125,42 +125,48 @@ export default function Calendar() {
       return;
     }
     
-    setSelectedDate(day);
+    setSelectedDates(prev => 
+      prev.includes(dateStr) 
+        ? prev.filter(d => d !== dateStr) 
+        : [...prev, dateStr]
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    if (selectedDate) {
-      const dateStr = getFormatDateStr(currentYear, currentMonth, selectedDate);
+    if (selectedDates.length > 0) {
       try {
-        await store.addReservation({
-          dateStr,
-          name: formData.name,
-          email: formData.email,
-          group: formData.group,
-          activity: formData.activity,
-          studentsCount: Number(formData.studentsCount),
-          notes: formData.notes,
-          otherTeachers: formData.otherTeachers,
-          needsTransport: formData.needsTransport,
-          transportDepartureTime: formData.transportDepartureTime,
-          transportReturnTime: formData.transportReturnTime,
-          arrivalTime: formData.arrivalTime,
-        });
+        for (const dateStr of selectedDates) {
+          await store.addReservation({
+            dateStr,
+            name: formData.name,
+            email: formData.email,
+            group: formData.group,
+            activity: formData.activity,
+            studentsCount: Number(formData.studentsCount),
+            notes: formData.notes,
+            otherTeachers: formData.otherTeachers,
+            needsTransport: formData.needsTransport,
+            transportDepartureTime: formData.transportDepartureTime,
+            transportReturnTime: formData.transportReturnTime,
+            arrivalTime: formData.arrivalTime,
+          });
+        }
+        
         const updatedRes = await store.getReservations();
         setReservations(updatedRes);
-        alert("¡Reserva enviada! El vicedirector recibirá una notificación.");
+        alert(`¡Reserva enviada para ${selectedDates.length} días! El vicedirector recibirá una notificación.`);
         
         setFormData({ 
           name: "", email: "", group: "", activity: "", 
           studentsCount: "", notes: "", otherTeachers: "", 
           needsTransport: false, transportDepartureTime: "", transportReturnTime: "", arrivalTime: "" 
         });
-        setSelectedDate(null);
+        setSelectedDates([]);
       } catch (err) {
-        console.error(err);
+        console.error("Error al guardar reserva:", err);
         alert("Hubo un error al enviar la reserva.");
       }
     }
@@ -194,7 +200,8 @@ export default function Calendar() {
               {!modalEvent.blockReservation ? (
                 <button 
                   onClick={() => {
-                    setSelectedDate(modalEvent.dateObj.getDate());
+                    const d = modalEvent.dateStr;
+                    setSelectedDates(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
                     setModalEvent(null);
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition shadow-sm"
@@ -229,7 +236,11 @@ export default function Calendar() {
           <button 
             onClick={handleNextMonth} 
             disabled={currentYear === schoolYearStart + 1 && currentMonth === 5}
-            className="p-2 hover:bg-slate-100 rounded-full transition disabled:opacity-30 disabled        <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center text-sm font-semibold text-slate-500">
+            className="p-2 hover:bg-slate-100 rounded-full transition disabled:opacity-30 disabled:cursor-not-allowed"
+          >&rarr;</button>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center text-sm font-semibold text-slate-500">
           {dayNames.map(day => <div key={day}>{day}</div>)}
         </div>
 
@@ -239,10 +250,10 @@ export default function Calendar() {
           ))}
           {Array.from({ length: daysInMonth }).map((_, i) => {
             const day = i + 1;
-            const isSelected = selectedDate === day;
+            const dateStr = getFormatDateStr(currentYear, currentMonth, day);
+            const isSelected = selectedDates.includes(dateStr);
             const jsDay = new Date(currentYear, currentMonth, day).getDay();
             const isWeekend = jsDay === 0 || jsDay === 6;
-            const dateStr = getFormatDateStr(currentYear, currentMonth, day);
             const isBaseHidden = settings.hiddenBaseEvents?.includes(dateStr);
             const event = isBaseHidden ? undefined : specialEvents[dateStr];
             
@@ -325,8 +336,16 @@ export default function Calendar() {
       </div>
 
       {/* Formulario de Reserva */}
-      <div className="w-full md:w-1/3 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
-        <h3 className="text-xl font-bold text-slate-800 mb-6">Solicitar Reserva</h3>
+      <div className="w-full md:w-1/3 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:sticky lg:top-8 h-fit">
+        <h3 className="text-xl font-bold text-slate-800 mb-6 border-b pb-4">
+          {selectedDates.length > 0 ? (
+            <span className="flex items-center gap-2">
+              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                {selectedDates.length} días seleccionados
+              </span>
+            </span>
+          ) : "Solicitar Reserva"}
+        </h3>
         
         <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <label className="block text-sm font-bold text-slate-700 mb-2">1. Selecciona tu grupo</label>
@@ -347,69 +366,69 @@ export default function Calendar() {
           <p className="text-sm text-slate-500 mb-6">
             Selecciona primero tu grupo para ver los días disponibles en el calendario.
           </p>
-        ) : selectedDate ? (
+        ) : selectedDates.length > 0 ? (
           <p className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg mb-6 border border-blue-100">
-            2. Día seleccionado: <strong>{new Date(currentYear, currentMonth, selectedDate).toLocaleDateString()}</strong>
+            2. <strong>{selectedDates.length}</strong> días seleccionados.
           </p>
         ) : (
           <p className="text-sm text-slate-500 mb-6 bg-slate-50 p-3 rounded-lg border border-slate-100">
-            2. Haz clic en un día del calendario para solicitar la salida.
+            2. Haz clic en el calendario para seleccionar los días.
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className={`space-y-4 transition-opacity ${selectedDates.length === 0 ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Nombre y Apellidos <span className="text-red-500">*</span></label>
-            <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Tu nombre y apellidos" disabled={!selectedDate || isSubmitting} />
+            <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Tu nombre y apellidos" disabled={selectedDates.length === 0 || isSubmitting} />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico <span className="text-red-500">*</span></label>
-            <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="correo@centro.edu" disabled={!selectedDate || isSubmitting} />
+            <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="correo@centro.edu" disabled={selectedDates.length === 0 || isSubmitting} />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Actividad / Destino <span className="text-red-500">*</span></label>
-            <input required type="text" value={formData.activity} onChange={e => setFormData({...formData, activity: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: Visita al museo" disabled={!selectedDate || isSubmitting} />
+            <input required type="text" value={formData.activity} onChange={e => setFormData({...formData, activity: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: Visita al museo" disabled={selectedDates.length === 0 || isSubmitting} />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Número de alumnado participante <span className="text-red-500">*</span></label>
-            <input required type="number" min="1" value={formData.studentsCount} onChange={e => setFormData({...formData, studentsCount: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: 25" disabled={!selectedDate || isSubmitting} />
+            <input required type="number" min="1" value={formData.studentsCount} onChange={e => setFormData({...formData, studentsCount: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: 25" disabled={selectedDates.length === 0 || isSubmitting} />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Cosas a tener en cuenta (Opcional)</label>
-            <textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm" placeholder="Ej: Llevar comida, protector solar, toalla..." rows={2} disabled={!selectedDate || isSubmitting}></textarea>
+            <textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm" placeholder="Ej: Llevar comida, protector solar, toalla..." rows={2} disabled={selectedDates.length === 0 || isSubmitting}></textarea>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Otros docentes acompañantes (Opcional)</label>
-            <input type="text" value={formData.otherTeachers} onChange={e => setFormData({...formData, otherTeachers: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Nombres de otros docentes" disabled={!selectedDate || isSubmitting} />
+            <input type="text" value={formData.otherTeachers} onChange={e => setFormData({...formData, otherTeachers: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Nombres de otros docentes" disabled={selectedDates.length === 0 || isSubmitting} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col justify-end">
               <label className="block text-sm font-medium text-slate-700 mb-1">Hora de salida del centro <span className="text-red-500">*</span></label>
-              <input required type="time" value={formData.transportDepartureTime} onChange={e => setFormData({...formData, transportDepartureTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mt-auto" disabled={!selectedDate || isSubmitting} />
+              <input required type="time" value={formData.transportDepartureTime} onChange={e => setFormData({...formData, transportDepartureTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mt-auto" disabled={selectedDates.length === 0 || isSubmitting} />
             </div>
             <div className="flex flex-col justify-end">
               <label className="block text-sm font-medium text-slate-700 mb-1">Hora est. de llegada <span className="text-red-500">*</span></label>
-              <input required type="time" value={formData.arrivalTime} onChange={e => setFormData({...formData, arrivalTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mt-auto" disabled={!selectedDate || isSubmitting} />
+              <input required type="time" value={formData.arrivalTime} onChange={e => setFormData({...formData, arrivalTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mt-auto" disabled={selectedDates.length === 0 || isSubmitting} />
             </div>
           </div>
 
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4 mt-2">
             <div className="flex items-center">
-              <input type="checkbox" id="transport" checked={formData.needsTransport} onChange={e => setFormData({...formData, needsTransport: e.target.checked})} disabled={!selectedDate || isSubmitting} className="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500" />
+              <input type="checkbox" id="transport" checked={formData.needsTransport} onChange={e => setFormData({...formData, needsTransport: e.target.checked})} disabled={selectedDates.length === 0 || isSubmitting} className="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500" />
               <label htmlFor="transport" className="ml-2 block text-sm font-bold text-slate-700">¿Es necesario transporte (Guagua)?</label>
             </div>
             
             {formData.needsTransport && (
               <div className="mt-3 pt-3 border-t border-slate-200">
                 <label className="block text-xs font-medium text-slate-700 mb-1">Hora de recogida del transporte en el lugar de la salida <span className="text-red-500">*</span></label>
-                <input required type="time" value={formData.transportReturnTime} onChange={e => setFormData({...formData, transportReturnTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm" disabled={!selectedDate || isSubmitting} />
+                <input required type="time" value={formData.transportReturnTime} onChange={e => setFormData({...formData, transportReturnTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm" disabled={selectedDates.length === 0 || isSubmitting} />
               </div>
             )}
           </div>
           
           <p className="text-xs text-slate-500 mb-2">* Campos obligatorios</p>
-          <button type="submit" disabled={!selectedDate || isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition">
+          <button type="submit" disabled={selectedDates.length === 0 || isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition">
             {isSubmitting ? "Enviando..." : "Solicitar Reserva"}
           </button>
         </form>

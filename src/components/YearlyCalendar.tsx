@@ -267,10 +267,12 @@ export default function YearlyCalendar() {
           }
 
           // Crear diccionario para acceso rápido en el render del grid
-          const eventsDict: Record<string, any> = {};
+          const eventsDict: Record<string, any[]> = {};
           eventsInMonth.forEach(e => {
-            // Si hay colisión, priorizamos mostrar el que sea (el dict sobreescribirá, pero es raro misma fecha)
-            eventsDict[e.dateStr] = e;
+            if (!eventsDict[e.dateStr]) {
+              eventsDict[e.dateStr] = [];
+            }
+            eventsDict[e.dateStr].push(e);
           });
 
           return (
@@ -288,40 +290,63 @@ export default function YearlyCalendar() {
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                   const day = i + 1;
                   const dateStr = getFormatDateStr(m.year, m.month, day);
-                  const event = eventsDict[dateStr];
+                  const dayEvents = eventsDict[dateStr];
+                  const primaryEvent = dayEvents ? dayEvents[0] : undefined;
                   const isWeekend = (firstDayOfMonth + i) % 7 >= 5;
                   
                   let cellClasses = "aspect-square flex flex-col items-center justify-start p-[4%] font-medium rounded-md sm:rounded-xl transition-transform cursor-default overflow-hidden ";
                   
-                  if (event) {
-                    cellClasses += `${colorStyles[event.color]} hover:scale-105 shadow-md cursor-pointer `;
+                  if (primaryEvent) {
+                    cellClasses += `${colorStyles[primaryEvent.color]} hover:scale-105 shadow-md cursor-pointer `;
                   } else if (isWeekend) {
                     cellClasses += "bg-slate-100 text-slate-400 justify-center ";
                   } else {
                     cellClasses += "text-slate-600 hover:bg-slate-50 justify-center ";
                   }
+
+                  let displayTitle = "";
+                  let modalDetails = "";
+                  let modalTitle = "";
+                  
+                  if (dayEvents) {
+                    if (dayEvents.length === 1) {
+                      displayTitle = primaryEvent.title;
+                      modalTitle = primaryEvent.title;
+                      modalDetails = primaryEvent.details;
+                    } else {
+                      const allSalidas = dayEvents.every(e => e.type === "salida");
+                      if (allSalidas) {
+                        displayTitle = dayEvents.map(e => e.title.replace('Salida\n', '')).join(', ');
+                        modalTitle = `${dayEvents.length} Salidas`;
+                      } else {
+                        displayTitle = `${dayEvents.length} Eventos`;
+                        modalTitle = `${dayEvents.length} Eventos`;
+                      }
+                      modalDetails = dayEvents.map(e => `=== ${e.title.replace('\n', ' ')} ===\n${e.details}`).join('\n\n');
+                    }
+                  }
                   
                   return (
                     <button
                       key={day}
-                      title={event?.title}
-                      onClick={() => event && setModalEvent({ dateStr, title: event.title, details: event.details })}
+                      title={displayTitle}
+                      onClick={() => dayEvents && setModalEvent({ dateStr, title: modalTitle, details: modalDetails })}
                       className={cellClasses}
-                      disabled={!event}
+                      disabled={!dayEvents}
                       style={{ containerType: 'inline-size' }}
                     >
                       <span 
                         className="font-bold"
-                        style={{ fontSize: 'clamp(0.8rem, 28cqi, 4rem)', marginBottom: event ? '4cqi' : '0' }}
+                        style={{ fontSize: 'clamp(0.8rem, 28cqi, 4rem)', marginBottom: dayEvents ? '4cqi' : '0' }}
                       >
                         {day}
                       </span>
-                      {event && (
+                      {dayEvents && (
                         <span 
-                          className="font-bold text-center leading-[1.1] break-words w-full px-[2%] line-clamp-4 whitespace-pre-line"
-                          style={{ fontSize: 'clamp(0.65rem, 15cqi, 2rem)' }}
+                          className="w-full px-1 break-words text-center font-semibold leading-none"
+                          style={{ fontSize: 'clamp(0.45rem, 16cqi, 1.5rem)', lineHeight: '1.1' }}
                         >
-                          {event.title}
+                          {displayTitle}
                         </span>
                       )}
                     </button>
