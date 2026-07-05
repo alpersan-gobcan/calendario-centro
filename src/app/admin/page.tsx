@@ -58,32 +58,34 @@ export default function AdminPage() {
   };
 
   const handleBulkImport = async () => {
-    if (!bulkImportText.trim()) return;
+    if (!bulkImportText) return;
     const lines = bulkImportText.split('\n');
-    const newBlocks: {dateStr: string, reason: string, id: string, type: string}[] = [];
+    const newBlocks: { dateStr: string, reason: string, type: string, id: string }[] = [];
     
-    lines.forEach(line => {
-      const parts = line.split(/[;,]/);
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const parts = line.split(';');
       if (parts.length >= 2) {
-         let datePart = parts[0].trim();
-         let reasonPart = parts[1].trim();
-         let typePart = parts.length >= 3 ? parts[2].trim() : "Días relevantes";
-         
-         if (datePart.includes('/')) {
-            const [d, m, y] = datePart.split('/');
-            if (d && m && y) {
-               datePart = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-            }
-         }
-         
-         newBlocks.push({
-            dateStr: datePart,
-            reason: reasonPart,
-            type: typePart,
-            id: Math.random().toString(36).substr(2, 9)
-         });
+        let dateStr = parts[0].trim();
+        const reason = parts[1].trim();
+        const type = parts.length >= 3 ? parts[2].trim() : "Evento Importado";
+        
+        // Conversión de formato DD/MM/YYYY a YYYY-MM-DD
+        if (dateStr.includes('/')) {
+          const [d, m, y] = dateStr.split('/');
+          if (d && m && y) {
+            dateStr = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+          }
+        }
+        
+        newBlocks.push({
+          dateStr,
+          reason,
+          type,
+          id: Math.random().toString(36).substr(2, 9)
+        });
       }
-    });
+    }
 
     if (newBlocks.length > 0) {
        const updatedSettings = {
@@ -94,6 +96,31 @@ export default function AdminPage() {
        await store.saveSettings(updatedSettings);
        setBulkImportText("");
        alert(`Se han importado ${newBlocks.length} fechas.`);
+    }
+  };
+
+  const [isSendingReport, setIsSendingReport] = useState(false);
+
+  const handleSendReport = async () => {
+    if (!printStartDate || !printEndDate) return;
+    setIsSendingReport(true);
+    try {
+      const res = await fetch('/api/send-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ start: printStartDate, end: printEndDate })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("¡Informe enviado correctamente al correo del vicedirector!");
+      } else {
+        alert("Error al enviar el informe: " + (data.error || "Desconocido"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Fallo de red al intentar enviar el informe.");
+    } finally {
+      setIsSendingReport(false);
     }
   };
 
@@ -367,9 +394,16 @@ export default function AdminPage() {
             <button 
               onClick={() => window.open(`/print?start=${printStartDate}&end=${printEndDate}`, '_blank')}
               disabled={!printStartDate || !printEndDate}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm disabled:opacity-50 transition h-[42px]"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm disabled:opacity-50 transition h-[42px] whitespace-nowrap"
             >
-              Imprimir Informe
+              Imprimir (PDF)
+            </button>
+            <button 
+              onClick={handleSendReport}
+              disabled={!printStartDate || !printEndDate || isSendingReport}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm disabled:opacity-50 transition h-[42px] flex items-center justify-center whitespace-nowrap"
+            >
+              {isSendingReport ? "Enviando..." : "📧 Enviar al Vicedirector"}
             </button>
           </div>
         </div>

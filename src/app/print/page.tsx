@@ -115,31 +115,31 @@ function PrintContent() {
                   
                   {/* Evento Base Hardcodeado */}
                   {baseEvent && (
-                    <div className="bg-slate-100 border-2 border-slate-300 rounded-lg p-2 text-xs break-inside-avoid shadow-sm">
-                      <div className="font-extrabold text-slate-900 text-sm mb-1">{baseEvent.title}</div>
-                      <div className="text-slate-700 font-medium">{baseEvent.details}</div>
+                    <div className="bg-slate-100 border-2 border-slate-300 rounded-lg p-1.5 text-[10px] sm:text-xs break-inside-avoid shadow-sm overflow-hidden break-words">
+                      <div className="font-extrabold text-slate-900 text-[11px] sm:text-sm mb-0.5 leading-tight">{baseEvent.title}</div>
+                      <div className="text-slate-700 font-medium leading-tight">{baseEvent.details}</div>
                     </div>
                   )}
 
                   {/* Bloqueos Manuales / Excel */}
                   {dayBlocks.map(b => (
-                    <div key={b.id} className="bg-rose-50 border-2 border-rose-400 rounded-lg p-2 text-xs break-inside-avoid shadow-sm">
-                      <div className="font-extrabold text-rose-900 text-sm mb-1">{b.type || "Bloqueado"}</div>
-                      <div className="text-rose-800 font-medium">{b.reason}</div>
+                    <div key={b.id} className="bg-rose-50 border-2 border-rose-400 rounded-lg p-1.5 text-[10px] sm:text-xs break-inside-avoid shadow-sm overflow-hidden break-words">
+                      <div className="font-extrabold text-rose-900 text-[11px] sm:text-sm mb-0.5 leading-tight">{b.type || "Bloqueado"}</div>
+                      <div className="text-rose-800 font-medium leading-tight">{b.reason}</div>
                     </div>
                   ))}
 
                   {/* Reservas */}
                   {dayReservations.map(r => (
-                    <div key={r.id} className="bg-cyan-50 print:border-2 print:border-cyan-600 border-2 border-cyan-400 rounded-lg p-2 text-xs break-inside-avoid shadow-sm">
-                      <div className="font-extrabold text-cyan-900 text-sm leading-tight mb-1">{r.group}</div>
-                      <div className="text-cyan-800 font-medium leading-snug mb-1">{r.activity}</div>
-                      <div className="text-slate-600 font-medium mb-1">👤 {r.name} ({r.studentsCount} alumnos)</div>
-                      {r.otherTeachers && <div className="text-slate-600 font-medium mb-1">Acompañantes: {r.otherTeachers}</div>}
+                    <div key={r.id} className="bg-cyan-50 print:border-2 print:border-cyan-600 border-2 border-cyan-400 rounded-lg p-1.5 text-[10px] sm:text-xs break-inside-avoid shadow-sm overflow-hidden break-words">
+                      <div className="font-extrabold text-cyan-900 text-[11px] sm:text-sm leading-tight mb-0.5">{r.group}</div>
+                      <div className="text-cyan-800 font-medium leading-tight mb-1">{r.activity}</div>
+                      <div className="text-slate-600 font-medium leading-tight mb-0.5">👤 {r.name} ({r.studentsCount} alu)</div>
+                      {r.otherTeachers && <div className="text-slate-600 font-medium leading-tight mb-0.5">👥 {r.otherTeachers}</div>}
                       
-                      <div className="text-slate-700 mt-2 font-bold bg-white/50 p-1 rounded">🕒 {r.transportDepartureTime || "Salida"} - {r.arrivalTime}</div>
-                      {r.needsTransport && <div className="text-slate-700 font-bold mt-1">🚌 Recogida: {r.transportReturnTime}</div>}
-                      {r.notes && <div className="text-slate-600 font-medium mt-1 bg-white p-1 rounded">Notas: {r.notes}</div>}
+                      <div className="text-slate-700 mt-1 font-bold bg-white/50 p-1 rounded text-[9px] sm:text-[10px] leading-tight">🕒 {r.transportDepartureTime || "Salida"} - {r.arrivalTime}</div>
+                      {r.needsTransport && <div className="text-slate-700 font-bold mt-0.5 text-[9px] sm:text-[10px] leading-tight">🚌 {r.transportReturnTime}</div>}
+                      {r.notes && <div className="text-slate-600 font-medium mt-1 bg-white p-1 rounded text-[9px] sm:text-[10px] leading-tight break-words">📝 {r.notes}</div>}
                     </div>
                   ))}
 
