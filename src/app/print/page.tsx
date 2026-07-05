@@ -13,7 +13,7 @@ export default function PrintPage() {
   const [calendarDays, setCalendarDays] = useState<{date: Date, isCurrentRange: boolean}[]>([]);
 
   useEffect(() => {
-    setReservations(store.getReservations());
+    store.getReservations().then(setReservations);
 
     if (startParam && endParam) {
       const start = new Date(startParam);
