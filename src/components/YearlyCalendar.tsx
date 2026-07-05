@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { store, Reservation } from "@/lib/store";
+import { store, Reservation, Settings } from "@/lib/store";
 
 // Mismos días especiales
 const specialEvents: Record<string, { title: string, details: string, blockReservation?: boolean, color: string, type: string }> = {
@@ -68,7 +68,7 @@ const dayNames = ["L", "M", "X", "J", "V", "S", "D"];
 export default function YearlyCalendar() {
   const [modalEvent, setModalEvent] = useState<{ dateStr: string, title: string, details: string } | null>(null);
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [settings, setSettings] = useState<{blockedDays?: {dateStr: string, reason: string, id: string, type?: string}[]}>({});
+  const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
   
   const [filters, setFilters] = useState({
     festivos: true,
