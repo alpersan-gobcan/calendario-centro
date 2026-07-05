@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { store, Reservation } from "@/lib/store";
 
-export default function PrintPage() {
+function PrintContent() {
   const searchParams = useSearchParams();
   const startParam = searchParams.get("start");
   const endParam = searchParams.get("end");
@@ -97,5 +97,13 @@ export default function PrintPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PrintPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500">Cargando vista de impresión...</div>}>
+      <PrintContent />
+    </Suspense>
   );
 }
