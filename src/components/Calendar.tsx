@@ -1,0 +1,395 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { store, Reservation, Settings } from "@/lib/store";
+
+// Días especiales extraídos del Excel
+const specialEvents: Record<string, { title: string, details: string, blockReservation?: boolean, color: string }> = {
+  "2026-09-08": { title: "Día del Pino", details: "Festivo Día del Pino.", blockReservation: true, color: "rose" },
+  "2026-09-10": { title: "Presentación 1º ESO", details: "Presentación y taller formativo 1º ESO. Presentaciones 2º, 3º, 4º ESO + 1º y 2 PDC.", color: "amber" },
+  "2026-09-11": { title: "Presentación Bachillerato", details: "Presentación 1º y 2º Bachillerato.", color: "amber" },
+  "2026-09-16": { title: "Presentación CFGB y CFGM", details: "Presentación Ciclos Formativos.", color: "amber" },
+  "2026-09-30": { title: "Visita de Familias", details: "Asamblea general por tutorías.", color: "amber" },
+  "2026-10-12": { title: "Fiesta Nacional", details: "Festivo. Fiesta Nacional de España.", blockReservation: true, color: "rose" },
+  "2026-10-15": { title: "Erasmus Days", details: "Celebración de los Erasmus Days.", color: "purple" },
+  "2026-10-30": { title: "Día de los Finaos", details: "Día de los Finaos / Halloween.", color: "amber" },
+  "2026-11-02": { title: "Todos los Santos", details: "Día de todos los Santos.", blockReservation: true, color: "rose" },
+  "2026-12-07": { title: "Puente Constitución", details: "Puente de la Constitución.", blockReservation: true, color: "emerald" },
+  "2026-12-08": { title: "Día Inmaculada", details: "Festivo Día de la Inmaculada Concepción.", blockReservation: true, color: "rose" },
+  "2026-12-18": { title: "Jornada Navideña", details: "Jornada Navideña en horario de tarde.", color: "amber" },
+  "2027-01-28": { title: "Día de la Paz", details: "Día de la no violencia y la paz.", color: "amber" },
+  "2027-01-29": { title: "Día de la Paz", details: "Día de la no violencia y la paz.", color: "amber" },
+  "2027-02-16": { title: "Martes de Carnaval", details: "Festivo en Santa Lucía.", blockReservation: true, color: "rose" },
+  "2027-02-17": { title: "Libre disposición", details: "Día de libre disposición (Carnaval).", blockReservation: true, color: "emerald" },
+  "2027-02-18": { title: "Libre disposición", details: "Día de libre disposición (Carnaval).", blockReservation: true, color: "emerald" },
+  "2027-04-30": { title: "Libre disposición", details: "Día de libre disposición.", blockReservation: true, color: "emerald" },
+  "2027-05-01": { title: "Día del Trabajador", details: "Festivo Día del Trabajador.", blockReservation: true, color: "rose" },
+  "2027-05-28": { title: "Día de Canarias", details: "Festivo Día de Canarias.", blockReservation: true, color: "rose" },
+  "2027-05-29": { title: "Libre disposición", details: "Día de libre disposición.", blockReservation: true, color: "emerald" },
+};
+
+// Añadir vacaciones
+for (let i = 23; i <= 31; i++) specialEvents[`2026-12-${i}`] = { title: "Navidad", details: "Vacaciones de Navidad", blockReservation: true, color: "blue" };
+for (let i = 1; i <= 10; i++) specialEvents[`2027-01-${i.toString().padStart(2, '0')}`] = { title: "Navidad", details: "Vacaciones de Navidad", blockReservation: true, color: "blue" };
+for (let i = 22; i <= 26; i++) specialEvents[`2027-03-${i}`] = { title: "Semana Santa", details: "Semana Santa", blockReservation: true, color: "blue" };
+
+const colorStyles: Record<string, string> = {
+  rose: "bg-rose-400 text-white border-rose-500 hover:bg-rose-500",
+  blue: "bg-blue-400 text-white border-blue-500 hover:bg-blue-500",
+  emerald: "bg-emerald-400 text-white border-emerald-500 hover:bg-emerald-500",
+  purple: "bg-purple-400 text-white border-purple-500 hover:bg-purple-500",
+  amber: "bg-amber-400 text-white border-amber-500 hover:bg-amber-500",
+};
+
+const textColors: Record<string, string> = {
+  rose: "text-rose-100",
+  blue: "text-blue-100",
+  emerald: "text-emerald-100",
+  purple: "text-purple-100",
+  amber: "text-amber-100",
+};
+
+export default function Calendar() {
+  const today = new Date();
+  const currentMonthIdx = today.getMonth();
+  const currentYearActual = today.getFullYear();
+  // Si estamos entre enero y junio (0-5), el curso empezó el año pasado.
+  // A partir de julio (6), ya cargamos el curso de ese año (ej: en julio 2026 cargamos 26/27).
+  const schoolYearStart = currentMonthIdx < 6 ? currentYearActual - 1 : currentYearActual;
+
+  const [currentDate, setCurrentDate] = useState(new Date(schoolYearStart, 8, 1));
+  const [selectedDate, setSelectedDate] = useState<number | null>(null);
+  
+  // Datos del formulario
+  const [formData, setFormData] = useState({ 
+    name: "", email: "", group: "", activity: "", 
+    studentsCount: "", notes: "", otherTeachers: "", 
+    needsTransport: false, transportDepartureTime: "", transportReturnTime: "", arrivalTime: "" 
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Estado local
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7 });
+  const [modalEvent, setModalEvent] = useState<{ dateStr: string, title: string, details: string, blockReservation?: boolean, dateObj: Date } | null>(null);
+
+  useEffect(() => {
+    store.getReservations().then(setReservations);
+    store.getSettings().then(setSettings);
+  }, []);
+
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const jsDay = new Date(currentYear, currentMonth, 1).getDay();
+  const firstDayOfMonth = (jsDay + 6) % 7;
+
+  const handlePrevMonth = () => {
+    if (currentYear === schoolYearStart && currentMonth === 8) return;
+    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+  };
+  
+  const handleNextMonth = () => {
+    if (currentYear === schoolYearStart + 1 && currentMonth === 5) return;
+    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+  };
+
+  const getFormatDateStr = (year: number, month: number, day: number) => {
+    return `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+  };
+
+  const handleDateClick = (day: number) => {
+    const clickedDate = new Date(currentYear, currentMonth, day);
+    const dateStr = getFormatDateStr(currentYear, currentMonth, day);
+    const event = specialEvents[dateStr];
+
+    if (!formData.group) {
+      alert("Por favor, selecciona primero tu grupo en el menú de la derecha.");
+      return;
+    }
+
+    if (event) {
+      setModalEvent({ 
+        dateStr, 
+        title: event.title, 
+        details: event.details, 
+        blockReservation: event.blockReservation,
+        dateObj: clickedDate
+      });
+      return;
+    }
+    
+    setSelectedDate(day);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    if (selectedDate) {
+      const dateStr = getFormatDateStr(currentYear, currentMonth, selectedDate);
+      try {
+        await store.addReservation({
+          dateStr,
+          name: formData.name,
+          email: formData.email,
+          group: formData.group,
+          activity: formData.activity,
+          studentsCount: Number(formData.studentsCount),
+          notes: formData.notes,
+          otherTeachers: formData.otherTeachers,
+          needsTransport: formData.needsTransport,
+          transportDepartureTime: formData.transportDepartureTime,
+          transportReturnTime: formData.transportReturnTime,
+          arrivalTime: formData.arrivalTime,
+        });
+        const updatedRes = await store.getReservations();
+        setReservations(updatedRes);
+        alert("¡Reserva enviada! El vicedirector recibirá una notificación.");
+        
+        setFormData({ 
+          name: "", email: "", group: "", activity: "", 
+          studentsCount: "", notes: "", otherTeachers: "", 
+          needsTransport: false, transportDepartureTime: "", transportReturnTime: "", arrivalTime: "" 
+        });
+        setSelectedDate(null);
+      } catch (err) {
+        console.error(err);
+        alert("Hubo un error al enviar la reserva.");
+      }
+    }
+    setIsSubmitting(false);
+  };
+
+  const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  const dayNames = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+  return (
+    <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 relative">
+      {/* Modal de Eventos */}
+      {modalEvent && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">{modalEvent.title}</h2>
+            <p className="text-sm text-slate-500 mb-4">{new Date(modalEvent.dateStr).toLocaleDateString()}</p>
+            <div className="bg-amber-50 text-amber-900 p-4 rounded-xl text-lg mb-6 border border-amber-100">
+              {modalEvent.details}
+            </div>
+            
+            <div className="flex flex-col gap-3">
+              {!modalEvent.blockReservation ? (
+                <button 
+                  onClick={() => {
+                    setSelectedDate(modalEvent.dateObj.getDate());
+                    setModalEvent(null);
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition shadow-sm"
+                >
+                  Seleccionar este día para reserva
+                </button>
+              ) : (
+                <div className="bg-red-50 text-red-700 text-center p-3 rounded-xl border border-red-100 text-sm font-semibold">
+                  No se admiten reservas en este día festivo.
+                </div>
+              )}
+              <button 
+                onClick={() => setModalEvent(null)}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-medium py-3 rounded-xl transition"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Calendario */}
+      <div className="flex-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex justify-between items-center mb-6">
+          <button 
+            onClick={handlePrevMonth} 
+            disabled={currentYear === schoolYearStart && currentMonth === 8}
+            className="p-2 hover:bg-slate-100 rounded-full transition disabled:opacity-30 disabled:cursor-not-allowed"
+          >&larr;</button>
+          <h3 className="text-xl font-bold text-slate-800">{monthNames[currentMonth]} {currentYear}</h3>
+          <button 
+            onClick={handleNextMonth} 
+            disabled={currentYear === schoolYearStart + 1 && currentMonth === 5}
+            className="p-2 hover:bg-slate-100 rounded-full transition disabled:opacity-30 disabled:cursor-not-allowed"
+          >&rarr;</button>
+        </div>
+
+        <div className="grid grid-cols-7 gap-2 mb-2 text-center text-sm font-semibold text-slate-500">
+          {dayNames.map(day => <div key={day}>{day}</div>)}
+        </div>
+
+        <div className="grid grid-cols-7 gap-2">
+          {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+            <div key={`empty-${i}`} className="p-4" />
+          ))}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            const isSelected = selectedDate === day;
+            const jsDay = new Date(currentYear, currentMonth, day).getDay();
+            const isWeekend = jsDay === 0 || jsDay === 6;
+            const dateStr = getFormatDateStr(currentYear, currentMonth, day);
+            const isBaseHidden = settings.hiddenBaseEvents?.includes(dateStr);
+            const event = isBaseHidden ? undefined : specialEvents[dateStr];
+            
+            const safeReservations = Array.isArray(reservations) ? reservations : [];
+            const isGroupReserved = formData.group ? safeReservations.some(r => r.dateStr === dateStr && r.group === formData.group) : false;
+            
+            // Comprobar días bloqueados por admin
+            const adminBlocked = settings.blockedDays?.find(b => b.dateStr === dateStr);
+            
+            // Comprobar antelación
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const targetDate = new Date(currentYear, currentMonth, day);
+            const diffTime = targetDate.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const tooClose = diffDays < settings.minDaysNotice;
+            
+            const isBlocked = isWeekend || (event && event.blockReservation) || tooClose || isGroupReserved || !formData.group || !!adminBlocked;
+
+            let btnClasses = "relative p-1 min-h-[90px] rounded-xl flex flex-col items-center justify-start text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 border ";
+            
+            if (isSelected) {
+              btnClasses += "bg-blue-600 text-white shadow-md border-blue-600 font-bold ";
+            } else if (event) {
+              btnClasses += `${colorStyles[event.color]} font-bold shadow-sm `;
+            } else if (adminBlocked) {
+              btnClasses += "bg-slate-700 text-slate-300 border-slate-800 cursor-not-allowed ";
+            } else if (isGroupReserved) {
+              btnClasses += "bg-slate-700 text-white font-bold border-slate-800 opacity-90 hover:opacity-100 ";
+            } else if (isWeekend) {
+              btnClasses += "bg-slate-200 text-slate-500 border-slate-300 hover:bg-slate-300 ";
+            } else if (tooClose || !formData.group) {
+              btnClasses += "bg-slate-50 text-slate-400 border-slate-200 opacity-50 cursor-not-allowed ";
+            } else {
+              btnClasses += "bg-white text-slate-700 hover:bg-blue-50 border-slate-100 ";
+            }
+            
+            return (
+              <button
+                key={day}
+                onClick={() => !isBlocked && handleDateClick(day)}
+                disabled={isBlocked}
+                className={btnClasses}
+              >
+                <span className="text-lg mt-1">{day}</span>
+                {event && !adminBlocked && (
+                  <span className={`text-[10px] sm:text-xs mt-1 leading-tight w-full px-1 break-words text-center ${isSelected ? 'text-white' : textColors[event.color] || 'text-amber-100'}`}>
+                    {event.title}
+                  </span>
+                )}
+                {adminBlocked && (
+                  <span className="text-[10px] sm:text-xs mt-1 leading-tight w-full px-1 break-words text-center text-slate-400 font-bold">
+                    {adminBlocked.reason || "Bloqueado"}
+                  </span>
+                )}
+                {isGroupReserved && !event && !adminBlocked && (
+                  <span className="text-[10px] sm:text-xs mt-1 leading-tight w-full px-1 break-words text-center text-slate-200">
+                    Ocupado
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Formulario de Reserva */}
+      <div className="w-full md:w-1/3 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
+        <h3 className="text-xl font-bold text-slate-800 mb-6">Solicitar Reserva</h3>
+        
+        <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <label className="block text-sm font-bold text-slate-700 mb-2">1. Selecciona tu grupo</label>
+          <select required value={formData.group} onChange={e => setFormData({...formData, group: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition font-medium" disabled={isSubmitting}>
+            <option value="">Selecciona un grupo...</option>
+            <option value="1º ESO A">1º ESO A</option>
+            <option value="1º ESO B">1º ESO B</option>
+            <option value="2º ESO A">2º ESO A</option>
+            <option value="3º ESO A">3º ESO A</option>
+            <option value="4º ESO A">4º ESO A</option>
+            <option value="1º Bachillerato">1º Bachillerato</option>
+            <option value="2º Bachillerato">2º Bachillerato</option>
+            <option value="Formación Profesional">Formación Profesional</option>
+          </select>
+        </div>
+
+        {!formData.group ? (
+          <p className="text-sm text-slate-500 mb-6">
+            Selecciona primero tu grupo para ver los días disponibles en el calendario.
+          </p>
+        ) : selectedDate ? (
+          <p className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg mb-6 border border-blue-100">
+            2. Día seleccionado: <strong>{new Date(currentYear, currentMonth, selectedDate).toLocaleDateString()}</strong>
+          </p>
+        ) : (
+          <p className="text-sm text-slate-500 mb-6 bg-slate-50 p-3 rounded-lg border border-slate-100">
+            2. Haz clic en un día del calendario para solicitar la salida.
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Nombre y Apellidos <span className="text-red-500">*</span></label>
+            <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Tu nombre y apellidos" disabled={!selectedDate || isSubmitting} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico <span className="text-red-500">*</span></label>
+            <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="correo@centro.edu" disabled={!selectedDate || isSubmitting} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Actividad / Destino <span className="text-red-500">*</span></label>
+            <input required type="text" value={formData.activity} onChange={e => setFormData({...formData, activity: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: Visita al museo" disabled={!selectedDate || isSubmitting} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Número de alumnado participante <span className="text-red-500">*</span></label>
+            <input required type="number" min="1" value={formData.studentsCount} onChange={e => setFormData({...formData, studentsCount: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: 25" disabled={!selectedDate || isSubmitting} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Cosas a tener en cuenta (Opcional)</label>
+            <textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm" placeholder="Ej: Llevar comida, protector solar, toalla..." rows={2} disabled={!selectedDate || isSubmitting}></textarea>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Otros docentes acompañantes (Opcional)</label>
+            <input type="text" value={formData.otherTeachers} onChange={e => setFormData({...formData, otherTeachers: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Nombres de otros docentes" disabled={!selectedDate || isSubmitting} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col justify-end">
+              <label className="block text-sm font-medium text-slate-700 mb-1">Hora de salida del centro <span className="text-red-500">*</span></label>
+              <input required type="time" value={formData.transportDepartureTime} onChange={e => setFormData({...formData, transportDepartureTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mt-auto" disabled={!selectedDate || isSubmitting} />
+            </div>
+            <div className="flex flex-col justify-end">
+              <label className="block text-sm font-medium text-slate-700 mb-1">Hora est. de llegada <span className="text-red-500">*</span></label>
+              <input required type="time" value={formData.arrivalTime} onChange={e => setFormData({...formData, arrivalTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mt-auto" disabled={!selectedDate || isSubmitting} />
+            </div>
+          </div>
+
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4 mt-2">
+            <div className="flex items-center">
+              <input type="checkbox" id="transport" checked={formData.needsTransport} onChange={e => setFormData({...formData, needsTransport: e.target.checked})} disabled={!selectedDate || isSubmitting} className="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500" />
+              <label htmlFor="transport" className="ml-2 block text-sm font-bold text-slate-700">¿Es necesario transporte (Guagua)?</label>
+            </div>
+            
+            {formData.needsTransport && (
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <label className="block text-xs font-medium text-slate-700 mb-1">Hora de recogida del transporte en el lugar de la salida <span className="text-red-500">*</span></label>
+                <input required type="time" value={formData.transportReturnTime} onChange={e => setFormData({...formData, transportReturnTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm" disabled={!selectedDate || isSubmitting} />
+              </div>
+            )}
+          </div>
+          
+          <p className="text-xs text-slate-500 mb-2">* Campos obligatorios</p>
+          <button type="submit" disabled={!selectedDate || isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition">
+            {isSubmitting ? "Enviando..." : "Solicitar Reserva"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
