@@ -90,14 +90,30 @@ export default function YearlyCalendar() {
     "Días relevantes": { type: "relevantes", color: "amber", filterKey: "relevantes" },
   };
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    store.getReservations().then(setReservations);
-    store.getSettings().then(setSettings);
+    Promise.all([
+      store.getReservations(),
+      store.getSettings()
+    ]).then(([res, set]) => {
+      setReservations(res);
+      setSettings(set);
+      setIsLoading(false);
+    });
   }, []);
 
   const getFormatDateStr = (year: number, month: number, day: number) => {
     return `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full relative">

@@ -73,9 +73,17 @@ export default function Calendar() {
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
   const [modalEvent, setModalEvent] = useState<{ dateStr: string, title: string, details: string, blockReservation?: boolean, dateObj: Date } | null>(null);
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    store.getReservations().then(setReservations);
-    store.getSettings().then(setSettings);
+    Promise.all([
+      store.getReservations(),
+      store.getSettings()
+    ]).then(([res, set]) => {
+      setReservations(res);
+      setSettings(set);
+      setIsLoading(false);
+    });
   }, []);
 
   const currentYear = currentDate.getFullYear();
@@ -164,6 +172,14 @@ export default function Calendar() {
 
   const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
   const dayNames = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center w-full h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 relative">
