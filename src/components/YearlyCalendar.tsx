@@ -119,16 +119,16 @@ export default function YearlyCalendar() {
     <div className="w-full relative">
       {/* Modal de Eventos */}
       {modalEvent && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center">
-            <h2 className="text-3xl font-bold text-slate-800 mb-2">{modalEvent.title}</h2>
-            <p className="text-sm text-slate-500 mb-4">{new Date(modalEvent.dateStr).toLocaleDateString()}</p>
-            <div className="bg-amber-50 text-amber-900 p-4 rounded-xl text-lg mb-6 border border-amber-100 whitespace-pre-wrap">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 md:p-8">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 flex flex-col max-h-[90vh]">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2 text-center">{modalEvent.title}</h2>
+            <p className="text-sm text-slate-500 mb-4 text-center capitalize">{new Date(modalEvent.dateStr).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <div className="bg-amber-50 text-amber-900 p-4 md:p-6 rounded-xl text-sm md:text-base border border-amber-100 whitespace-pre-wrap text-left overflow-y-auto flex-grow mb-6 shadow-inner">
               {modalEvent.details}
             </div>
             <button 
               onClick={() => setModalEvent(null)}
-              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium py-3 rounded-xl transition text-lg"
+              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium py-3 rounded-xl transition text-lg mt-auto shrink-0"
             >
               Cerrar
             </button>
