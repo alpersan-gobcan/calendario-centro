@@ -69,6 +69,7 @@ export default function YearlyCalendar() {
   const [modalEvent, setModalEvent] = useState<{ dateStr: string, title: string, details?: string, dayEvents?: { title: string, details: string, type: string, color: string }[] } | null>(null);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
+  const [showFilters, setShowFilters] = useState(false);
   
   const [filters, setFilters] = useState({
     festivos: true,
@@ -155,38 +156,52 @@ export default function YearlyCalendar() {
       <div className="max-w-7xl mx-auto w-full px-4 lg:px-8">
         
         {/* Filtros */}
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col gap-4 mb-12">
-          <span className="font-bold text-slate-700 text-center text-lg">Filtros</span>
-          <div className="flex flex-wrap gap-4 justify-center items-center">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={filters.festivos} onChange={e => setFilters({...filters, festivos: e.target.checked})} className="w-5 h-5 text-rose-500 rounded focus:ring-rose-500" />
-              <span className="text-slate-600 font-medium">Festivos</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={filters.efemerides} onChange={e => setFilters({...filters, efemerides: e.target.checked})} className="w-5 h-5 text-amber-500 rounded focus:ring-amber-500" />
-              <span className="text-slate-600 font-medium">Efemérides</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={filters.salidas} onChange={e => setFilters({...filters, salidas: e.target.checked})} className="w-5 h-5 text-cyan-500 rounded focus:ring-cyan-500" />
-              <span className="text-slate-600 font-medium">Actividades</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={filters.familias} onChange={e => setFilters({...filters, familias: e.target.checked})} className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500" />
-              <span className="text-slate-600 font-medium">Visita de Familias</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={filters.evaluacion} onChange={e => setFilters({...filters, evaluacion: e.target.checked})} className="w-5 h-5 text-emerald-500 rounded focus:ring-emerald-500" />
-              <span className="text-slate-600 font-medium">Evaluación</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={filters.boletines} onChange={e => setFilters({...filters, boletines: e.target.checked})} className="w-5 h-5 text-blue-500 rounded focus:ring-blue-500" />
-              <span className="text-slate-600 font-medium">Boletines</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={filters.relevantes} onChange={e => setFilters({...filters, relevantes: e.target.checked})} className="w-5 h-5 text-amber-600 rounded focus:ring-amber-600" />
-              <span className="text-slate-600 font-medium">Relevantes</span>
-            </label>
-          </div>
+        <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col gap-4 mb-12">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center justify-center gap-2 font-bold text-slate-700 text-lg hover:text-blue-600 transition-colors w-full"
+          >
+            <span>Filtros del Calendario</span>
+            <svg 
+              className={`w-5 h-5 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} 
+              fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {showFilters && (
+            <div className="flex flex-wrap gap-4 justify-center items-center pt-4 border-t border-slate-100 animate-in slide-in-from-top-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={filters.festivos} onChange={e => setFilters({...filters, festivos: e.target.checked})} className="w-5 h-5 text-rose-500 rounded focus:ring-rose-500" />
+                <span className="text-slate-600 font-medium">Festivos</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={filters.efemerides} onChange={e => setFilters({...filters, efemerides: e.target.checked})} className="w-5 h-5 text-amber-500 rounded focus:ring-amber-500" />
+                <span className="text-slate-600 font-medium">Efemérides</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={filters.salidas} onChange={e => setFilters({...filters, salidas: e.target.checked})} className="w-5 h-5 text-cyan-500 rounded focus:ring-cyan-500" />
+                <span className="text-slate-600 font-medium">Actividades</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={filters.familias} onChange={e => setFilters({...filters, familias: e.target.checked})} className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500" />
+                <span className="text-slate-600 font-medium">Visita de Familias</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={filters.evaluacion} onChange={e => setFilters({...filters, evaluacion: e.target.checked})} className="w-5 h-5 text-emerald-500 rounded focus:ring-emerald-500" />
+                <span className="text-slate-600 font-medium">Evaluación</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={filters.boletines} onChange={e => setFilters({...filters, boletines: e.target.checked})} className="w-5 h-5 text-blue-500 rounded focus:ring-blue-500" />
+                <span className="text-slate-600 font-medium">Boletines</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={filters.relevantes} onChange={e => setFilters({...filters, relevantes: e.target.checked})} className="w-5 h-5 text-amber-600 rounded focus:ring-amber-600" />
+                <span className="text-slate-600 font-medium">Relevantes</span>
+              </label>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-16">
@@ -266,6 +281,33 @@ export default function YearlyCalendar() {
 
           eventsInMonth.sort((a, b) => new Date(a.dateStr).getDate() - new Date(b.dateStr).getDate());
 
+          // Agrupar eventos consecutivos del mismo tipo (ej. vacaciones) para la leyenda
+          const groupedLegendEvents: (typeof eventsInMonth[0] & { startDay: number, endDay: number })[] = [];
+          if (eventsInMonth.length > 0) {
+            let currentGroup = { 
+              ...eventsInMonth[0],
+              startDay: new Date(eventsInMonth[0].dateStr).getDate(),
+              endDay: new Date(eventsInMonth[0].dateStr).getDate()
+            };
+            
+            for (let i = 1; i < eventsInMonth.length; i++) {
+              const evt = eventsInMonth[i];
+              const dayNum = new Date(evt.dateStr).getDate();
+              
+              if (evt.title === currentGroup.title && dayNum === currentGroup.endDay + 1 && evt.type !== "salida") {
+                currentGroup.endDay = dayNum;
+              } else {
+                groupedLegendEvents.push(currentGroup);
+                currentGroup = { 
+                  ...evt,
+                  startDay: dayNum,
+                  endDay: dayNum
+                };
+              }
+            }
+            groupedLegendEvents.push(currentGroup);
+          }
+
           // Crear diccionario para acceso rápido en el render del grid
           const eventsDict: Record<string, any[]> = {};
           eventsInMonth.forEach(e => {
@@ -326,10 +368,10 @@ export default function YearlyCalendar() {
               <div className="flex-1 lg:w-1/2 flex flex-col bg-slate-50 rounded-2xl p-6 border border-slate-100 max-h-[600px] overflow-hidden">
                 <h4 className="font-bold text-xl lg:text-2xl text-slate-700 mb-4 border-b pb-2">Eventos del Mes</h4>
                 <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-                  {eventsInMonth.length === 0 ? (
+                  {groupedLegendEvents.length === 0 ? (
                     <p className="text-slate-500 italic text-base">No hay eventos programados en este mes.</p>
                   ) : (
-                    eventsInMonth.map((evt, evtIdx) => (
+                    groupedLegendEvents.map((evt, evtIdx) => (
                       <div 
                         key={evtIdx} 
                         className="flex gap-3 items-start bg-white p-3 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-slate-400 transition"
@@ -345,7 +387,9 @@ export default function YearlyCalendar() {
                       >
                         <div className={`w-5 h-5 rounded-full mt-1 shrink-0 shadow-inner ${colorStyles[evt.color].split(' ')[0]}`} />
                         <div className="flex-1">
-                          <p className="font-bold text-lg lg:text-xl text-slate-800">{new Date(evt.dateStr).getDate()} - {evt.title.replace('\n', ' ')}</p>
+                          <p className="font-bold text-lg lg:text-xl text-slate-800">
+                            {evt.startDay === evt.endDay ? evt.startDay : `${evt.startDay} al ${evt.endDay}`} - {evt.title.replace('\n', ' ')}
+                          </p>
                           <p className="text-sm lg:text-base text-slate-600 mt-2 whitespace-pre-wrap">{evt.details}</p>
                         </div>
                       </div>

@@ -282,6 +282,13 @@ export default function Calendar() {
             
             // Comprobar días bloqueados por admin
             const adminBlocked = settings.blockedDays?.find(b => b.dateStr === dateStr);
+            const isStrictAdminBlock = adminBlocked && (
+              adminBlocked.type === "Festivos y Vacaciones" || 
+              adminBlocked.type.toLowerCase().includes("festiv") ||
+              adminBlocked.type.toLowerCase().includes("vacacion") ||
+              adminBlocked.type.toLowerCase().includes("libre") ||
+              (!adminBlocked.type && adminBlocked.reason === "Bloqueado por dirección")
+            );
             
             // Comprobar antelación
             const today = new Date();
@@ -291,7 +298,7 @@ export default function Calendar() {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             const tooClose = diffDays < settings.minDaysNotice;
             
-            const isBlocked = isWeekend || (event && event.blockReservation) || tooClose || isGroupReserved || selectedGroups.length === 0 || !!adminBlocked;
+            const isBlocked = isWeekend || (event && event.blockReservation) || tooClose || isGroupReserved || selectedGroups.length === 0 || !!isStrictAdminBlock;
 
             let btnClasses = "relative aspect-square flex flex-col items-center justify-start p-[4%] font-medium rounded-md sm:rounded-xl transition-transform overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 border ";
             
@@ -299,7 +306,7 @@ export default function Calendar() {
               btnClasses += "bg-blue-600 text-white shadow-md border-blue-600 font-bold scale-105 ";
             } else if (event) {
               btnClasses += `${colorStyles[event.color]} font-bold shadow-sm hover:scale-105 border-transparent `;
-            } else if (adminBlocked) {
+            } else if (isStrictAdminBlock) {
               btnClasses += "bg-slate-700 text-slate-300 border-slate-800 cursor-not-allowed ";
             } else if (isGroupReserved) {
               btnClasses += "bg-slate-700 text-white font-bold border-slate-800 opacity-90 hover:opacity-100 ";
