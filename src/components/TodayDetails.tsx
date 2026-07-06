@@ -59,15 +59,15 @@ export default function TodayDetails() {
 
   if (isLoading) {
     return (
-      <div className="bg-white p-6 sm:p-10 lg:p-14 rounded-3xl shadow-sm border border-blue-100 mb-12 w-full max-w-7xl mx-auto px-4 lg:px-8 flex justify-center items-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-3xl shadow-sm border border-blue-100 mb-6 w-full max-w-7xl mx-auto px-4 lg:px-8 flex justify-center items-center min-h-[150px]">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-6 sm:p-10 lg:p-14 rounded-3xl shadow-sm border border-blue-100 mb-12 w-full max-w-7xl mx-auto px-4 lg:px-8">
-      <h3 className="text-3xl sm:text-4xl font-bold text-slate-800 mb-8 capitalize">Hoy, {formattedDate}</h3>
+    <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-3xl shadow-sm border border-blue-100 mb-6 w-full max-w-7xl mx-auto px-4 lg:px-8">
+      <h3 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-4 capitalize">Hoy, {formattedDate}</h3>
       <div className="space-y-4">
         
         {/* Eventos especiales */}
