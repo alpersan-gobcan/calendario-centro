@@ -290,7 +290,7 @@ export default function Calendar() {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             const tooClose = diffDays < settings.minDaysNotice;
             
-            const isBlocked = isWeekend || (event && event.blockReservation) || tooClose || isGroupReserved || !formData.group || !!adminBlocked;
+            const isBlocked = isWeekend || (event && event.blockReservation) || tooClose || isGroupReserved || selectedGroups.length === 0 || !!adminBlocked;
 
             let btnClasses = "relative aspect-square flex flex-col items-center justify-start p-[4%] font-medium rounded-md sm:rounded-xl transition-transform overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 border ";
             
