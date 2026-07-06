@@ -284,9 +284,9 @@ export default function Calendar() {
             const adminBlocked = settings.blockedDays?.find(b => b.dateStr === dateStr);
             const isStrictAdminBlock = adminBlocked && (
               adminBlocked.type === "Festivos y Vacaciones" || 
-              adminBlocked.type.toLowerCase().includes("festiv") ||
-              adminBlocked.type.toLowerCase().includes("vacacion") ||
-              adminBlocked.type.toLowerCase().includes("libre") ||
+              adminBlocked.type?.toLowerCase().includes("festiv") ||
+              adminBlocked.type?.toLowerCase().includes("vacacion") ||
+              adminBlocked.type?.toLowerCase().includes("libre") ||
               (!adminBlocked.type && adminBlocked.reason === "Bloqueado por dirección")
             );
             
