@@ -60,7 +60,8 @@ Tu solicitud de reserva para la actividad "${reservation.activity}" con el grupo
 
 Saludos.`
     );
-    const mailtoLink = `mailto:${reservation.email}?subject=${emailSubject}&body=${emailBody}`;
+    // Enlace directo a Gmail (web)
+    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${reservation.email}&su=${emailSubject}&body=${emailBody}`;
 
     const title = actionType === 'confirm' ? '¡Reserva Confirmada en la Base de Datos!' : 'Reserva Rechazada y Borrada';
     const color = actionType === 'confirm' ? '#10b981' : '#ef4444';
@@ -79,19 +80,19 @@ Saludos.`
             
             <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e2e8f0;">
               <p style="margin-bottom: 20px; font-weight: bold;">Paso final: Avisar al docente</p>
-              <a href="${mailtoLink}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                Abrir Gmail/Correo para avisar a ${reservation.name}
+              <a href="${gmailLink}" style="background-color: #ea4335; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                Abrir Gmail para avisar a ${reservation.name}
               </a>
               <p style="font-size: 12px; color: #94a3b8; margin-top: 15px;">
-                Se abrirá tu programa de correo con el destinatario y un texto precargado.
+                Si no se abrió automáticamente, haz clic en el botón rojo.
               </p>
             </div>
           </div>
           
           <script>
-            // Intentar abrir el correo automáticamente al cargar la página
+            // Abrir la ventana de redacción de Gmail automáticamente
             setTimeout(function() {
-              window.location.href = "${mailtoLink}";
+              window.location.href = "${gmailLink}";
             }, 1000);
           </script>
         </body>
