@@ -50,53 +50,50 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       if (deleteError) throw deleteError;
     }
 
-    // Enviar correo al profesor
-    if (process.env.RESEND_API_KEY && reservation.email) {
-      const statusText = actionType === 'confirm' ? 'CONFIRMADA' : 'RECHAZADA';
-      const statusColor = actionType === 'confirm' ? '#10b981' : '#ef4444';
-      
-      const emailHtml = `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #333;">Estado de tu solicitud de salida</h2>
-          <p>Hola ${reservation.name},</p>
-          <p>Tu solicitud de reserva para la actividad <strong>${reservation.activity}</strong> con el grupo <strong>${reservation.group}</strong> ha sido:</p>
-          <div style="background-color: ${statusColor}; color: white; padding: 15px; border-radius: 8px; text-align: center; font-size: 20px; font-weight: bold; margin: 20px 0;">
-            ${statusText}
-          </div>
-          <p>Fechas solicitadas: ${reservation.dateStr}</p>
-          <hr style="border: 1px solid #eee; margin: 30px 0;" />
-          <p style="color: #666; font-size: 12px;">Este es un mensaje automático del sistema de reservas del centro.</p>
-        </div>
-      `;
+    // Preparar el mailto
+    const statusText = actionType === 'confirm' ? 'CONFIRMADA' : 'RECHAZADA';
+    const emailSubject = encodeURIComponent(`Tu reserva ha sido ${statusText}: ${reservation.activity}`);
+    const emailBody = encodeURIComponent(
+`Hola ${reservation.name},
 
-      try {
-        await resend.emails.send({
-          from: 'Reservas Calendario <onboarding@resend.dev>', // Usar correo verificado en prod
-          to: [reservation.email],
-          subject: `Tu reserva ha sido ${statusText}: ${reservation.activity}`,
-          html: emailHtml
-        });
-      } catch (emailError) {
-        console.error("Error enviando email al profesor:", emailError);
-      }
-    }
+Tu solicitud de reserva para la actividad "${reservation.activity}" con el grupo ${reservation.group} en la fecha ${reservation.dateStr} ha sido ${statusText}.
 
-    // Responder al vicedirector con una página HTML de éxito
-    const title = actionType === 'confirm' ? '¡Reserva Confirmada!' : 'Reserva Rechazada y Borrada';
+Saludos.`
+    );
+    const mailtoLink = `mailto:${reservation.email}?subject=${emailSubject}&body=${emailBody}`;
+
+    const title = actionType === 'confirm' ? '¡Reserva Confirmada en la Base de Datos!' : 'Reserva Rechazada y Borrada';
     const color = actionType === 'confirm' ? '#10b981' : '#ef4444';
 
     return new NextResponse(`
       <html>
+        <head>
+          <title>${title}</title>
+        </head>
         <body style="font-family: sans-serif; text-align: center; padding: 50px; background-color: #f8fafc;">
           <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-width: 500px; margin: 0 auto;">
             <h1 style="color: ${color};">${title}</h1>
             <p style="color: #475569; font-size: 16px;">
-              Se ha enviado un correo automáticamente al profesor (${reservation.email}) notificándole la decisión.
+              La base de datos se ha actualizado correctamente.
             </p>
-            <p style="margin-top: 30px;">
-              Ya puedes cerrar esta ventana.
-            </p>
+            
+            <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e2e8f0;">
+              <p style="margin-bottom: 20px; font-weight: bold;">Paso final: Avisar al docente</p>
+              <a href="${mailtoLink}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                Abrir Gmail/Correo para avisar a ${reservation.name}
+              </a>
+              <p style="font-size: 12px; color: #94a3b8; margin-top: 15px;">
+                Se abrirá tu programa de correo con el destinatario y un texto precargado.
+              </p>
+            </div>
           </div>
+          
+          <script>
+            // Intentar abrir el correo automáticamente al cargar la página
+            setTimeout(function() {
+              window.location.href = "${mailtoLink}";
+            }, 1000);
+          </script>
         </body>
       </html>
     `, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
