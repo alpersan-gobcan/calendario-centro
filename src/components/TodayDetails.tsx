@@ -97,7 +97,7 @@ export default function TodayDetails() {
           <div className="flex items-start gap-3 bg-blue-50 p-4 rounded-xl border border-blue-100">
              <div className="text-2xl">🚌</div>
              <div className="w-full">
-               <p className="font-bold text-blue-900 text-lg mb-2">Salidas Programadas Hoy</p>
+               <p className="font-bold text-blue-900 text-lg mb-2">Actividades Programadas Hoy</p>
                <div className="space-y-3">
                  {todayReservations.map(r => (
                    <div key={r.id} className="bg-white p-3 rounded-lg border border-blue-200 shadow-sm">
@@ -113,7 +113,7 @@ export default function TodayDetails() {
           !todayEvent && !adminBlock && (
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-3">
                <div className="text-2xl">📅</div>
-               <p className="text-slate-600 font-medium">No hay eventos ni salidas programadas para el día de hoy.</p>
+               <p className="text-slate-600 font-medium">No hay eventos ni actividades programadas para el día de hoy.</p>
             </div>
           )
         )}

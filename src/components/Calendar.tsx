@@ -446,7 +446,7 @@ export default function Calendar() {
             
             {formData.needsTransport && (
               <div className="mt-3 pt-3 border-t border-slate-200">
-                <label className="block text-xs font-medium text-slate-700 mb-1">Hora de recogida del transporte en el lugar de la salida <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Hora de recogida del transporte en el lugar de la actividad <span className="text-red-500">*</span></label>
                 <input required type="time" value={formData.transportReturnTime} onChange={e => setFormData({...formData, transportReturnTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm" disabled={selectedDates.length === 0 || isSubmitting} />
               </div>
             )}

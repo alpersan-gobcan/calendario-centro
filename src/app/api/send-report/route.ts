@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     const hiddenBaseEvents = Array.isArray(settings.hiddenBaseEvents) ? settings.hiddenBaseEvents : [];
 
     // Format events
-    let emailHtml = `<h1 style="color: #0f172a;">Informe de Salidas y Eventos</h1>
+    let emailHtml = `<h1 style="color: #0f172a;">Informe de Actividades y Eventos</h1>
       <p style="color: #475569; font-size: 16px;">Desde: <b>${startDate.toLocaleDateString('es-ES')}</b> hasta <b>${endDate.toLocaleDateString('es-ES')}</b></p>
       <hr style="border: none; border-top: 1px solid #cbd5e1; margin: 20px 0;" />`;
 
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
     }
 
     if (!hasEvents) {
-      emailHtml += `<p style="color: #64748b; font-style: italic;">No hay salidas, reservas ni eventos programados para estas fechas.</p>`;
+      emailHtml += `<p style="color: #64748b; font-style: italic;">No hay actividades, reservas ni eventos programados para estas fechas.</p>`;
     }
 
     const vicedirectorEmail = process.env.VICEDIRECTOR_EMAIL;
@@ -118,9 +118,9 @@ export async function POST(request: Request) {
     }
 
     await resend.emails.send({
-      from: 'Calendario Salidas <onboarding@resend.dev>',
+      from: 'Calendario Actividades <onboarding@resend.dev>',
       to: [vicedirectorEmail],
-      subject: `Informe Semanal de Salidas (${startDate.toLocaleDateString('es-ES')} - ${endDate.toLocaleDateString('es-ES')})`,
+      subject: `Informe Semanal de Actividades (${startDate.toLocaleDateString('es-ES')} - ${endDate.toLocaleDateString('es-ES')})`,
       html: emailHtml,
     });
 

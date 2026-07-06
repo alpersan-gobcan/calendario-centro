@@ -85,7 +85,7 @@ function PrintContent() {
   return (
     <div className="bg-white text-black min-h-screen p-8 print:p-0 font-sans">
       <div className="text-center mb-6">
-        <h1 className="text-4xl font-extrabold uppercase tracking-widest text-slate-900">Calendario de Salidas</h1>
+        <h1 className="text-4xl font-extrabold uppercase tracking-widest text-slate-900">Calendario de Actividades</h1>
         <p className="text-xl text-slate-600 font-semibold mt-2">
           {new Date(startParam).toLocaleDateString()} - {new Date(endParam).toLocaleDateString()}
         </p>

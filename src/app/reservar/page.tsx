@@ -8,7 +8,7 @@ export default function ReservarPage() {
           Reservar Actividad
         </h2>
         <p className="text-slate-600">
-          Elige un día disponible en el calendario para solicitar tu salida o viaje.
+          Elige un día disponible en el calendario para solicitar tu actividad o viaje.
         </p>
       </section>
 

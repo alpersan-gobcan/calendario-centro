@@ -308,7 +308,7 @@ export default function AdminPage() {
               <select value={newBlockType} onChange={e => setNewBlockType(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none text-sm">
                 <option value="Festivos y Vacaciones">Festivos y Vacaciones</option>
                 <option value="Efemérides">Efemérides</option>
-                <option value="Salidas">Salidas</option>
+                <option value="Actividades">Actividades</option>
                 <option value="Visita de Familias">Visita de Familias</option>
                 <option value="Sesiones de evaluación">Sesiones de evaluación</option>
                 <option value="Entrega de Boletines">Entrega de Boletines</option>
@@ -484,7 +484,7 @@ export default function AdminPage() {
         {/* Módulo de Reportes PDF */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-3 print:hidden">
           <h2 className="text-2xl font-bold text-slate-800 mb-6">Generar Informe (PDF)</h2>
-          <p className="text-sm text-slate-600 mb-4">Selecciona un rango de fechas para generar un documento listo para imprimir o guardar como PDF con todas las salidas programadas en ese periodo.</p>
+          <p className="text-sm text-slate-600 mb-4">Selecciona un rango de fechas para generar un documento listo para imprimir o guardar como PDF con todas las actividades programadas en ese periodo.</p>
           
           <div className="flex flex-col sm:flex-row gap-4 items-end">
             <div className="flex-1">

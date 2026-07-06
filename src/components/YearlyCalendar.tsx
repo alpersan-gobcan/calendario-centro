@@ -83,7 +83,7 @@ export default function YearlyCalendar() {
   const categoryMap: Record<string, { type: string, color: string, filterKey: keyof typeof filters }> = {
     "Festivos y Vacaciones": { type: "festivo", color: "rose", filterKey: "festivos" },
     "Efemérides": { type: "efemeride", color: "amber", filterKey: "efemerides" },
-    "Salidas": { type: "salida", color: "cyan", filterKey: "salidas" },
+    "Actividades": { type: "salida", color: "cyan", filterKey: "salidas" },
     "Visita de Familias": { type: "familias", color: "purple", filterKey: "familias" },
     "Sesiones de evaluación": { type: "evaluacion", color: "emerald", filterKey: "evaluacion" },
     "Entrega de Boletines": { type: "boletines", color: "blue", filterKey: "boletines" },
@@ -152,7 +152,7 @@ export default function YearlyCalendar() {
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={filters.salidas} onChange={e => setFilters({...filters, salidas: e.target.checked})} className="w-5 h-5 text-cyan-500 rounded focus:ring-cyan-500" />
-              <span className="text-slate-600 font-medium">Salidas</span>
+              <span className="text-slate-600 font-medium">Actividades</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={filters.familias} onChange={e => setFilters({...filters, familias: e.target.checked})} className="w-5 h-5 text-purple-500 rounded focus:ring-purple-500" />
@@ -207,7 +207,7 @@ export default function YearlyCalendar() {
                  else if (lowerType.includes("familia")) catKey = "Visita de Familias";
                  else if (lowerType.includes("evaluaci")) catKey = "Sesiones de evaluación";
                  else if (lowerType.includes("boletin")) catKey = "Entrega de Boletines";
-                 else if (lowerType.includes("salida")) catKey = "Salidas";
+                 else if (lowerType.includes("salida") || lowerType.includes("actividad")) catKey = "Actividades";
 
                  const cat = categoryMap[catKey] || categoryMap["Días relevantes"];
                  if (filters[cat.filterKey]) {
@@ -238,7 +238,7 @@ export default function YearlyCalendar() {
                   let details = `Actividad: ${r.activity}\nGrupos: ${r.group}\nAlumnos: ${r.studentsCount}\n${transportInfo}\nLlegada: ${r.arrivalTime}\nEstado: ${status === "confirmed" ? "Aceptada" : "Pendiente"}`;
                   eventsInMonth.push({ 
                     dateStr: dStr, 
-                    title: `Salida\n${groupTitle}`, 
+                    title: `Actividad\n${groupTitle}`, 
                     details: details, 
                     color: status === "confirmed" ? "cyan" : "slate", 
                     type: "salida" 
@@ -325,8 +325,8 @@ export default function YearlyCalendar() {
                     } else {
                       const allSalidas = dayEvents.every(e => e.type === "salida");
                       if (allSalidas) {
-                        displayTitle = dayEvents.map(e => e.title.replace('Salida\n', '')).join(', ');
-                        modalTitle = `${dayEvents.length} Salidas`;
+                        displayTitle = dayEvents.map(e => e.title.replace('Actividad\n', '')).join(', ');
+                        modalTitle = `${dayEvents.length} Actividades`;
                       } else {
                         displayTitle = `${dayEvents.length} Eventos`;
                         modalTitle = `${dayEvents.length} Eventos`;

@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         const actionBaseUrl = `${siteUrl}/api/reservations/${data.id}/action`;
 
         const emailHtml = `
-          <h2>Nueva solicitud de salida</h2>
+          <h2>Nueva solicitud de actividad</h2>
           <p><strong>Docente:</strong> ${body.name}</p>
           <p><strong>Email:</strong> ${body.email}</p>
           <p><strong>Grupo:</strong> ${body.group}</p>

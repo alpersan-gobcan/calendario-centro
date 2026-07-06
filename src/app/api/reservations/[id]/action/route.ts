@@ -61,7 +61,8 @@ Tu solicitud de reserva para la actividad "${reservation.activity}" con el grupo
 Saludos.`
     );
     // Enlace directo a Gmail (web)
-    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${reservation.email}&su=${emailSubject}&body=${emailBody}`;
+    const encodedEmail = encodeURIComponent((reservation.email || '').trim());
+    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodedEmail}&su=${emailSubject}&body=${emailBody}`;
 
     const title = actionType === 'confirm' ? '¡Reserva Confirmada en la Base de Datos!' : 'Reserva Rechazada y Borrada';
     const color = actionType === 'confirm' ? '#10b981' : '#ef4444';
