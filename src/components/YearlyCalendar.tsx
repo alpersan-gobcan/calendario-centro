@@ -266,31 +266,6 @@ export default function YearlyCalendar() {
 
           eventsInMonth.sort((a, b) => new Date(a.dateStr).getDate() - new Date(b.dateStr).getDate());
 
-          // Agrupar eventos consecutivos del mismo tipo (solo para festivos/efemerides para no liar con reservas)
-          const groupedEvents = [];
-          if (eventsInMonth.length > 0) {
-            let currentGroup = { 
-              title: eventsInMonth[0].title, 
-              color: eventsInMonth[0].color,
-              start: new Date(eventsInMonth[0].dateStr).getDate(), 
-              end: new Date(eventsInMonth[0].dateStr).getDate(),
-              type: eventsInMonth[0].type
-            };
-            
-            for (let i = 1; i < eventsInMonth.length; i++) {
-              const evt = eventsInMonth[i];
-              const dayNum = new Date(evt.dateStr).getDate();
-              
-              if (evt.title === currentGroup.title && dayNum === currentGroup.end + 1 && evt.type !== "salida") {
-                currentGroup.end = dayNum;
-              } else {
-                groupedEvents.push(currentGroup);
-                currentGroup = { title: evt.title, color: evt.color, start: dayNum, end: dayNum, type: evt.type };
-              }
-            }
-            groupedEvents.push(currentGroup);
-          }
-
           // Crear diccionario para acceso rápido en el render del grid
           const eventsDict: Record<string, any[]> = {};
           eventsInMonth.forEach(e => {
@@ -301,83 +276,84 @@ export default function YearlyCalendar() {
           });
 
           return (
-            <div key={index} className="bg-white p-3 sm:p-8 lg:p-16 rounded-3xl shadow-sm border border-slate-200 flex flex-col h-full w-full">
-              <h3 className="text-center font-bold text-2xl sm:text-4xl lg:text-6xl text-slate-700 mb-6 sm:mb-12">{m.name}</h3>
+            <div key={index} className="bg-white p-4 sm:p-6 lg:p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col lg:flex-row gap-8 h-full w-full">
               
-              <div className="grid grid-cols-7 gap-1 sm:gap-2 lg:gap-4 mb-4 sm:mb-6 text-center text-sm sm:text-xl lg:text-3xl font-bold text-slate-400">
-                {dayNames.map(d => <div key={d}>{d}</div>)}
-              </div>
-              
-              <div className="grid grid-cols-7 gap-1 sm:gap-2 lg:gap-4">
-                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                  <div key={`empty-${i}`} className="p-1 sm:p-2 lg:p-3" />
-                ))}
-                {Array.from({ length: daysInMonth }).map((_, i) => {
-                  const day = i + 1;
-                  const dateStr = getFormatDateStr(m.year, m.month, day);
-                  const dayEvents = eventsDict[dateStr];
-                  const primaryEvent = dayEvents ? dayEvents[0] : undefined;
-                  const isWeekend = (firstDayOfMonth + i) % 7 >= 5;
-                  
-                  let cellClasses = "aspect-square flex flex-col items-center justify-start p-[4%] font-medium rounded-md sm:rounded-xl transition-transform cursor-default overflow-hidden ";
-                  
-                  if (primaryEvent) {
-                    cellClasses += `${colorStyles[primaryEvent.color]} hover:scale-105 shadow-md cursor-pointer `;
-                  } else if (isWeekend) {
-                    cellClasses += "bg-slate-100 text-slate-400 justify-center ";
-                  } else {
-                    cellClasses += "text-slate-600 hover:bg-slate-50 justify-center ";
-                  }
-
-                  let displayTitle = "";
-                  let modalDetails = "";
-                  let modalTitle = "";
-                  
-                  if (dayEvents) {
-                    if (dayEvents.length === 1) {
-                      displayTitle = primaryEvent.title;
-                      modalTitle = primaryEvent.title;
-                      modalDetails = primaryEvent.details;
+              {/* Calendario a la izquierda */}
+              <div className="flex-1 lg:w-1/2">
+                <h3 className="text-center font-bold text-2xl sm:text-3xl text-slate-700 mb-6">{m.name}</h3>
+                
+                <div className="grid grid-cols-7 gap-2 mb-4 text-center text-sm font-bold text-slate-400">
+                  {dayNames.map(d => <div key={d}>{d}</div>)}
+                </div>
+                
+                <div className="grid grid-cols-7 gap-2">
+                  {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                    <div key={`empty-${i}`} className="p-2" />
+                  ))}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const day = i + 1;
+                    const dateStr = getFormatDateStr(m.year, m.month, day);
+                    const dayEvents = eventsDict[dateStr];
+                    const primaryEvent = dayEvents ? dayEvents[0] : undefined;
+                    const isWeekend = (firstDayOfMonth + i) % 7 >= 5;
+                    
+                    let cellClasses = "aspect-square flex items-center justify-center font-medium rounded-xl transition-transform cursor-default overflow-hidden ";
+                    
+                    if (primaryEvent) {
+                      cellClasses += `${colorStyles[primaryEvent.color]} hover:scale-105 shadow-md cursor-pointer `;
+                    } else if (isWeekend) {
+                      cellClasses += "bg-slate-100 text-slate-400 ";
                     } else {
-                      const allSalidas = dayEvents.every(e => e.type === "salida");
-                      if (allSalidas) {
-                        displayTitle = dayEvents.map(e => e.title.replace('Actividad\n', '')).join(', ');
-                        modalTitle = `${dayEvents.length} Actividades`;
-                      } else {
-                        displayTitle = `${dayEvents.length} Eventos`;
-                        modalTitle = `${dayEvents.length} Eventos`;
-                      }
-                      modalDetails = dayEvents.map(e => `=== ${e.title.replace('\n', ' ')} ===\n${e.details}`).join('\n\n');
+                      cellClasses += "text-slate-600 hover:bg-slate-50 border border-slate-100 ";
                     }
-                  }
-                  
-                  return (
-                    <button
-                      key={day}
-                      title={displayTitle}
-                      onClick={() => dayEvents && setModalEvent({ dateStr, title: modalTitle, details: modalDetails, dayEvents: dayEvents })}
-                      className={cellClasses}
-                      disabled={!dayEvents}
-                      style={{ containerType: 'inline-size' }}
-                    >
-                      <span 
-                        className="font-bold"
-                        style={{ fontSize: 'clamp(0.8rem, 28cqi, 4rem)', marginBottom: dayEvents ? '4cqi' : '0' }}
+                    
+                    return (
+                      <button
+                        key={day}
+                        title={primaryEvent?.title}
+                        onClick={() => dayEvents && setModalEvent({ dateStr, title: primaryEvent?.title || "", details: primaryEvent?.details, dayEvents: dayEvents })}
+                        className={cellClasses}
+                        disabled={!dayEvents}
                       >
-                        {day}
-                      </span>
-                      {dayEvents && (
-                        <span 
-                          className="w-full px-1 break-words text-center font-semibold leading-none"
-                          style={{ fontSize: 'clamp(0.45rem, 16cqi, 1.5rem)', lineHeight: '1.1' }}
-                        >
-                          {displayTitle}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+                        <span className="font-bold text-base sm:text-lg">{day}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
+              {/* Leyenda a la derecha */}
+              <div className="flex-1 lg:w-1/2 flex flex-col bg-slate-50 rounded-2xl p-6 border border-slate-100 max-h-[600px] overflow-hidden">
+                <h4 className="font-bold text-lg text-slate-700 mb-4 border-b pb-2">Eventos del Mes</h4>
+                <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                  {eventsInMonth.length === 0 ? (
+                    <p className="text-slate-500 italic text-sm">No hay eventos programados en este mes.</p>
+                  ) : (
+                    eventsInMonth.map((evt, evtIdx) => (
+                      <div 
+                        key={evtIdx} 
+                        className="flex gap-3 items-start bg-white p-3 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-slate-400 transition"
+                        onClick={() => {
+                          const dayEvts = eventsDict[evt.dateStr];
+                          setModalEvent({ 
+                            dateStr: evt.dateStr, 
+                            title: evt.title, 
+                            details: evt.details, 
+                            dayEvents: dayEvts 
+                          });
+                        }}
+                      >
+                        <div className={`w-4 h-4 rounded-full mt-1 shrink-0 shadow-inner ${colorStyles[evt.color].split(' ')[0]}`} />
+                        <div className="flex-1">
+                          <p className="font-bold text-sm text-slate-800">{new Date(evt.dateStr).getDate()} - {evt.title.replace('\n', ' ')}</p>
+                          <p className="text-xs text-slate-500 mt-1 whitespace-pre-wrap">{evt.details}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
             </div>
           );
         })}
