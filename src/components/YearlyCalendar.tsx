@@ -66,7 +66,7 @@ const months = [
 const dayNames = ["L", "M", "X", "J", "V", "S", "D"];
 
 export default function YearlyCalendar() {
-  const [modalEvent, setModalEvent] = useState<{ dateStr: string, title: string, details: string } | null>(null);
+  const [modalEvent, setModalEvent] = useState<{ dateStr: string, title: string, details?: string, dayEvents?: { title: string, details: string, type: string, color: string }[] } | null>(null);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
   
@@ -123,8 +123,24 @@ export default function YearlyCalendar() {
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 flex flex-col max-h-[90vh]">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2 text-center">{modalEvent.title}</h2>
             <p className="text-sm text-slate-500 mb-4 text-center capitalize">{new Date(modalEvent.dateStr).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            <div className="bg-amber-50 text-amber-900 p-4 md:p-6 rounded-xl text-sm md:text-base border border-amber-100 whitespace-pre-wrap text-left overflow-y-auto flex-grow mb-6 shadow-inner">
-              {modalEvent.details}
+            <div className="bg-slate-50 p-4 md:p-6 rounded-xl text-sm md:text-base border border-slate-200 text-left overflow-y-auto flex-grow mb-6 shadow-inner relative">
+              {modalEvent.dayEvents && modalEvent.dayEvents.length > 1 && (
+                <div className="sticky top-0 bg-blue-100 text-blue-800 font-semibold py-2 px-4 rounded-lg mb-4 text-center shadow-sm z-10 text-sm">
+                  ↓ Hay {modalEvent.dayEvents.length} eventos en total. Desplázate hacia abajo para verlos todos.
+                </div>
+              )}
+              {modalEvent.dayEvents && modalEvent.dayEvents.length > 1 ? (
+                <div className="space-y-4">
+                  {modalEvent.dayEvents.map((evt, idx) => (
+                    <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                      <h3 className="font-bold text-lg text-slate-800 mb-2 border-b pb-2">{evt.title.replace('\n', ' ')}</h3>
+                      <div className="whitespace-pre-wrap text-slate-700">{evt.details}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap text-slate-700">{modalEvent.details}</div>
+              )}
             </div>
             <button 
               onClick={() => setModalEvent(null)}
@@ -339,7 +355,7 @@ export default function YearlyCalendar() {
                     <button
                       key={day}
                       title={displayTitle}
-                      onClick={() => dayEvents && setModalEvent({ dateStr, title: modalTitle, details: modalDetails })}
+                      onClick={() => dayEvents && setModalEvent({ dateStr, title: modalTitle, details: modalDetails, dayEvents: dayEvents })}
                       className={cellClasses}
                       disabled={!dayEvents}
                       style={{ containerType: 'inline-size' }}
