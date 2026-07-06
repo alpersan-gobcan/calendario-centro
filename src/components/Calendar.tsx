@@ -13,7 +13,8 @@ const ALL_GROUPS = [
   "2º BACH A", "2º BACH B", "2º BACH C",
   "1º FPB", "2º FPB",
   "1º ITE", "2º ITE",
-  "1º IEA", "2º IEA"
+  "1º IEA", "2º IEA",
+  "Aula Enclave"
 ];
 
 // Días especiales extraídos del Excel

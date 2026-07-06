@@ -20,15 +20,15 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${inter.className} bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col`}>
         <header className="bg-white shadow-sm sticky top-0 z-50 print:hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
-              <Image src="/logo.png" alt="Logo del Centro" width={40} height={40} className="object-contain" />
-              <h1 className="text-xl font-bold text-slate-700 hover:text-blue-600 transition-colors">Calendario Escolar</h1>
+              <Image src="/logo.png" alt="Logo del Centro" width={48} height={48} className="object-contain" />
+              <h1 className="text-2xl font-bold text-slate-700 hover:text-blue-600 transition-colors hidden sm:block">Calendario Escolar</h1>
             </Link>
-            <nav className="flex gap-6">
-              <Link href="/" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">Inicio</Link>
-              <Link href="/reservar" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">Reservar</Link>
-              <Link href="/admin" className="text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors">Admin</Link>
+            <nav className="flex gap-2 sm:gap-4">
+              <Link href="/" className="px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-base sm:text-lg font-bold bg-slate-50 text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">Inicio</Link>
+              <Link href="/reservar" className="px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-base sm:text-lg font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm">Reservar</Link>
+              <Link href="/admin" className="px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-base sm:text-lg font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">Admin</Link>
             </nav>
           </div>
         </header>

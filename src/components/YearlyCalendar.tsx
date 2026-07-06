@@ -324,10 +324,10 @@ export default function YearlyCalendar() {
 
               {/* Leyenda a la derecha */}
               <div className="flex-1 lg:w-1/2 flex flex-col bg-slate-50 rounded-2xl p-6 border border-slate-100 max-h-[600px] overflow-hidden">
-                <h4 className="font-bold text-lg text-slate-700 mb-4 border-b pb-2">Eventos del Mes</h4>
-                <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                <h4 className="font-bold text-xl lg:text-2xl text-slate-700 mb-4 border-b pb-2">Eventos del Mes</h4>
+                <div className="flex-1 overflow-y-auto pr-2 space-y-4">
                   {eventsInMonth.length === 0 ? (
-                    <p className="text-slate-500 italic text-sm">No hay eventos programados en este mes.</p>
+                    <p className="text-slate-500 italic text-base">No hay eventos programados en este mes.</p>
                   ) : (
                     eventsInMonth.map((evt, evtIdx) => (
                       <div 
@@ -343,10 +343,10 @@ export default function YearlyCalendar() {
                           });
                         }}
                       >
-                        <div className={`w-4 h-4 rounded-full mt-1 shrink-0 shadow-inner ${colorStyles[evt.color].split(' ')[0]}`} />
+                        <div className={`w-5 h-5 rounded-full mt-1 shrink-0 shadow-inner ${colorStyles[evt.color].split(' ')[0]}`} />
                         <div className="flex-1">
-                          <p className="font-bold text-sm text-slate-800">{new Date(evt.dateStr).getDate()} - {evt.title.replace('\n', ' ')}</p>
-                          <p className="text-xs text-slate-500 mt-1 whitespace-pre-wrap">{evt.details}</p>
+                          <p className="font-bold text-lg lg:text-xl text-slate-800">{new Date(evt.dateStr).getDate()} - {evt.title.replace('\n', ' ')}</p>
+                          <p className="text-sm lg:text-base text-slate-600 mt-2 whitespace-pre-wrap">{evt.details}</p>
                         </div>
                       </div>
                     ))
