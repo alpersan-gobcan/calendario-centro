@@ -40,11 +40,15 @@ export const store = {
   },
 
   saveReservation: async (reservation: Reservation): Promise<void> => {
-    await fetch('/api/reservations', {
+    const res = await fetch('/api/reservations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(reservation)
     });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Error al guardar reserva");
+    }
   },
 
   addReservation: async (res: Omit<Reservation, "id" | "createdAt">): Promise<Reservation> => {
@@ -62,11 +66,15 @@ export const store = {
   },
 
   updateReservationStatus: async (id: string, status: "pending" | "confirmed"): Promise<void> => {
-    await fetch(`/api/reservations/${id}`, {
+    const res = await fetch(`/api/reservations/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status })
     });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Error al actualizar estado");
+    }
   },
 
   getSettings: async (): Promise<Settings> => {
@@ -89,10 +97,14 @@ export const store = {
   },
 
   saveSettings: async (settings: Settings): Promise<void> => {
-    await fetch('/api/settings', {
+    const res = await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings)
     });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Error al guardar ajustes");
+    }
   }
 };

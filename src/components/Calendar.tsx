@@ -178,9 +178,9 @@ export default function Calendar() {
         });
         setSelectedDates([]);
         setSelectedGroups([]);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error al guardar reserva:", err);
-        alert("Hubo un error al enviar la reserva.");
+        alert("Hubo un error al enviar la reserva: " + (err.message || "Error desconocido"));
       }
     }
     setIsSubmitting(false);
