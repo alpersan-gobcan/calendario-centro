@@ -21,8 +21,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    // Remove createdAt because Supabase uses created_at
-    const { createdAt, ...insertData } = body;
+    // Remove createdAt because Supabase uses created_at, and warnings because it's only for email
+    const { createdAt, warnings, ...insertData } = body;
     
     // Insert into Supabase
     const { data, error } = await supabase
