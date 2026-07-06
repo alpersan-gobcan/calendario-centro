@@ -457,6 +457,7 @@ export default function YearlyCalendar() {
       );
     })}
   </div>
-</div>
-);
+      </div>
+    </div>
+  );
 }
