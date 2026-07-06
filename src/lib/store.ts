@@ -12,6 +12,7 @@ export type Reservation = {
   transportDepartureTime?: string;
   transportReturnTime?: string;
   arrivalTime: string;
+  warnings?: string;
   status?: "pending" | "confirmed" | "rejected";
   createdAt: number;
 };

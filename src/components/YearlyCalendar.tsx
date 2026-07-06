@@ -70,6 +70,20 @@ export default function YearlyCalendar() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
   const [showFilters, setShowFilters] = useState(false);
+  const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
+
+  const toggleAllMonths = (expand: boolean) => {
+    const newState: Record<string, boolean> = {};
+    months.forEach(m => {
+      newState[`${m.year}-${m.month}`] = expand;
+    });
+    setExpandedMonths(newState);
+  };
+
+  const toggleMonth = (monthKey: string) => {
+    setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  };
+
   
   const [filters, setFilters] = useState({
     festivos: true,
@@ -204,7 +218,22 @@ export default function YearlyCalendar() {
           )}
         </div>
 
-        <div className="flex flex-col gap-16">
+        <div className="flex justify-end gap-3 mb-6">
+          <button 
+            onClick={() => toggleAllMonths(true)}
+            className="text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 px-4 py-2 rounded-xl transition shadow-sm"
+          >
+            Maximizar todo
+          </button>
+          <button 
+            onClick={() => toggleAllMonths(false)}
+            className="text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 px-4 py-2 rounded-xl transition shadow-sm"
+          >
+            Minimizar todo
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-6">
           {months.map((m, index) => {
             const daysInMonth = new Date(m.year, m.month + 1, 0).getDate();
             const jsDay = new Date(m.year, m.month, 1).getDay();
@@ -317,12 +346,37 @@ export default function YearlyCalendar() {
             eventsDict[e.dateStr].push(e);
           });
 
+          const monthKey = `${m.year}-${m.month}`;
+          const isExpanded = expandedMonths[monthKey];
+
           return (
-            <div key={index} className="bg-white p-4 sm:p-6 lg:p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col lg:flex-row gap-8 h-full w-full">
+            <div key={index} className="bg-white p-4 sm:p-6 lg:p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col gap-4 w-full">
               
-              {/* Calendario a la izquierda */}
-              <div className="flex-1 lg:w-1/2">
-                <h3 className="text-center font-bold text-2xl sm:text-3xl text-slate-700 mb-6">{m.name}</h3>
+              <button 
+                onClick={() => toggleMonth(monthKey)}
+                className="flex items-center justify-between w-full font-bold text-2xl sm:text-3xl text-slate-700 hover:text-blue-600 transition group"
+              >
+                <span>{m.name}</span>
+                <div className="flex items-center gap-4">
+                  {!isExpanded && eventsInMonth.length > 0 && (
+                    <span className="text-sm font-normal text-slate-500 bg-slate-100 px-3 py-1 rounded-full group-hover:bg-blue-50 transition">
+                      {eventsInMonth.length} eventos
+                    </span>
+                  )}
+                  <svg 
+                    className={`w-6 h-6 sm:w-8 sm:h-8 transition-transform duration-300 text-slate-400 group-hover:text-blue-500 ${isExpanded ? 'rotate-180' : ''}`} 
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </button>
+
+              {isExpanded && (
+                <div className="flex flex-col lg:flex-row gap-8 pt-6 border-t border-slate-100 mt-2 animate-in fade-in slide-in-from-top-4">
+                  {/* Calendario a la izquierda */}
+                  <div className="flex-1 lg:w-1/2">
+
                 
                 <div className="grid grid-cols-7 gap-2 mb-4 text-center text-sm font-bold text-slate-400">
                   {dayNames.map(d => <div key={d}>{d}</div>)}
@@ -397,12 +451,12 @@ export default function YearlyCalendar() {
                   )}
                 </div>
               </div>
-
             </div>
-          );
-        })}
+          )}
         </div>
-      </div>
-    </div>
-  );
+      );
+    })}
+  </div>
+</div>
+);
 }

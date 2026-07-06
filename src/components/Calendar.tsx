@@ -83,7 +83,6 @@ export default function Calendar() {
   // Estado local
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
-  const [modalEvent, setModalEvent] = useState<{ dateStr: string, title: string, details: string, blockReservation?: boolean, dateObj: Date } | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -120,23 +119,10 @@ export default function Calendar() {
   };
 
   const handleDateClick = (day: number) => {
-    const clickedDate = new Date(currentYear, currentMonth, day);
     const dateStr = getFormatDateStr(currentYear, currentMonth, day);
-    const event = specialEvents[dateStr];
 
     if (selectedGroups.length === 0) {
       alert("Por favor, selecciona primero al menos un grupo en el menú de la derecha.");
-      return;
-    }
-
-    if (event) {
-      setModalEvent({ 
-        dateStr, 
-        title: event.title, 
-        details: event.details, 
-        blockReservation: event.blockReservation,
-        dateObj: clickedDate
-      });
       return;
     }
     
@@ -153,6 +139,19 @@ export default function Calendar() {
     
     if (selectedDates.length > 0 && selectedGroups.length > 0) {
       try {
+        const warningsList: string[] = [];
+        selectedDates.forEach(dStr => {
+          const sEvent = specialEvents[dStr];
+          if (sEvent) {
+            warningsList.push(`${dStr}: ${sEvent.title}`);
+          }
+          const adminEvent = settings.blockedDays?.find(b => b.dateStr === dStr);
+          if (adminEvent) {
+            warningsList.push(`${dStr}: ${adminEvent.type || adminEvent.reason}`);
+          }
+        });
+        const warnings = warningsList.length > 0 ? Array.from(new Set(warningsList)).join(" | ") : undefined;
+
         await store.addReservation({
           dateStr: selectedDates.sort().join(","),
           name: formData.name,
@@ -166,6 +165,7 @@ export default function Calendar() {
           transportDepartureTime: formData.transportDepartureTime,
           transportReturnTime: formData.transportReturnTime,
           arrivalTime: formData.arrivalTime,
+          warnings,
         });
         
         const updatedRes = await store.getReservations();
@@ -200,44 +200,6 @@ export default function Calendar() {
 
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 relative">
-      {/* Modal de Eventos */}
-      {modalEvent && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">{modalEvent.title}</h2>
-            <p className="text-sm text-slate-500 mb-4">{new Date(modalEvent.dateStr).toLocaleDateString()}</p>
-            <div className="bg-amber-50 text-amber-900 p-4 rounded-xl text-lg mb-6 border border-amber-100">
-              {modalEvent.details}
-            </div>
-            
-            <div className="flex flex-col gap-3">
-              {!modalEvent.blockReservation ? (
-                <button 
-                  onClick={() => {
-                    const d = modalEvent.dateStr;
-                    setSelectedDates(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
-                    setModalEvent(null);
-                  }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition shadow-sm"
-                >
-                  Seleccionar este día para reserva
-                </button>
-              ) : (
-                <div className="bg-red-50 text-red-700 text-center p-3 rounded-xl border border-red-100 text-sm font-semibold">
-                  No se admiten reservas en este día festivo.
-                </div>
-              )}
-              <button 
-                onClick={() => setModalEvent(null)}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-medium py-3 rounded-xl transition"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Calendario */}
       <div className="flex-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div className="flex justify-between items-center mb-6">

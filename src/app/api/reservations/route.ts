@@ -54,6 +54,10 @@ export async function POST(request: Request) {
           ${body.needsTransport ? '<p><strong>Requiere transporte (Guagua)</strong></p>' : ''}
           ${body.otherTeachers ? `<p><strong>Acompañantes:</strong> ${body.otherTeachers}</p>` : ''}
           ${body.notes ? `<p><strong>Notas:</strong> ${body.notes}</p>` : ''}
+          ${warnings ? `<div style="margin-top: 15px; padding: 15px; background-color: #fee2e2; border-left: 4px solid #ef4444; border-radius: 4px;">
+            <strong style="color: #b91c1c;">⚠️ CUIDADO, coincide con:</strong>
+            <p style="color: #991b1b; margin-top: 5px; margin-bottom: 0;">${warnings}</p>
+          </div>` : ''}
           
           <div style="margin-top: 30px; display: flex; gap: 15px;">
             <a href="${actionBaseUrl}?type=confirm" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Confirmar Reserva</a>
