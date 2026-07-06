@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     while (current <= endDate) {
       const dateStr = `${current.getFullYear()}-${(current.getMonth() + 1).toString().padStart(2, '0')}-${current.getDate().toString().padStart(2, '0')}`;
       
-      const dayRes = safeReservations.filter((r: any) => r.dateStr === dateStr);
+      const dayRes = safeReservations.filter((r: any) => r.dateStr.includes(dateStr) && r.status !== 'rejected');
       const dayBlocks = safeBlockedDays.filter((b: any) => b.dateStr === dateStr);
       const isBaseHidden = hiddenBaseEvents.includes(dateStr);
       const baseEvent = !isBaseHidden ? specialEvents[dateStr] : null;

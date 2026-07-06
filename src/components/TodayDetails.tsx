@@ -51,8 +51,8 @@ export default function TodayDetails() {
   const isBaseHidden = settings.hiddenBaseEvents?.includes(dateStr);
   const todayEvent = isBaseHidden ? undefined : specialEvents[dateStr];
   const adminBlock = settings.blockedDays?.find(b => b.dateStr === dateStr);
-  const safeReservations = Array.isArray(reservations) ? reservations : [];
-  const todayReservations = safeReservations.filter(r => r.dateStr === dateStr);
+  const safeReservations = Array.isArray(reservations) ? reservations.filter(r => r.status !== 'rejected') : [];
+  const todayReservations = safeReservations.filter(r => r.dateStr.includes(dateStr));
   
   const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   const formattedDate = today.toLocaleDateString('es-ES', options);

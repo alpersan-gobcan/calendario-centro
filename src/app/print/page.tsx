@@ -103,7 +103,7 @@ function PrintContent() {
         <div className="grid grid-cols-7 bg-white">
           {calendarDays.map((d, i) => {
             const dateStr = `${d.date.getFullYear()}-${(d.date.getMonth()+1).toString().padStart(2,'0')}-${d.date.getDate().toString().padStart(2,'0')}`;
-            const dayReservations = (Array.isArray(reservations) ? reservations : []).filter(r => r.dateStr.split(',').includes(dateStr));
+            const dayReservations = (Array.isArray(reservations) ? reservations : []).filter(r => r.status !== 'rejected' && r.dateStr.split(',').includes(dateStr));
             const dayBlocks = (settings.blockedDays || []).filter(b => b.dateStr === dateStr);
             const isBaseHidden = settings.hiddenBaseEvents?.includes(dateStr);
             const baseEvent = !isBaseHidden ? specialEvents[dateStr] : null;

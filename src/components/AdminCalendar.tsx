@@ -63,8 +63,8 @@ export default function AdminCalendar({
   };
 
   const getEventsForDay = (dateStr: string) => {
-    const safeReservations = Array.isArray(reservations) ? reservations : [];
-    const res = safeReservations.filter(r => r.dateStr === dateStr);
+    const safeReservations = Array.isArray(reservations) ? reservations.filter(r => r.status !== 'rejected') : [];
+    const res = safeReservations.filter(r => r.dateStr.includes(dateStr));
     const blocks = (settings.blockedDays || []).filter(b => b.dateStr === dateStr);
     const base = specialEvents[dateStr];
     const isBaseHidden = settings.hiddenBaseEvents?.includes(dateStr);

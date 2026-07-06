@@ -188,10 +188,11 @@ export default function AdminPage() {
     
     return reservations
       .filter(r => {
-        const d = new Date(r.dateStr);
+        if (r.status === 'rejected') return false;
+        const d = new Date(r.dateStr.split(',')[0]);
         return d >= start && d <= end;
       })
-      .sort((a, b) => new Date(a.dateStr).getTime() - new Date(b.dateStr).getTime());
+      .sort((a, b) => new Date(a.dateStr.split(',')[0]).getTime() - new Date(b.dateStr.split(',')[0]).getTime());
   };
 
   const printReservations = getFilteredPrintReservations();
@@ -370,59 +371,73 @@ export default function AdminPage() {
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 print:hidden">
-          <h3 className="text-xl font-bold text-slate-700 mb-4">Reservas Activas ({(Array.isArray(reservations) ? reservations : []).length})</h3>
+          <h3 className="text-xl font-bold text-slate-700 mb-6">Estado de las Reservas</h3>
           
-          {(Array.isArray(reservations) ? reservations : []).length === 0 ? (
-            <p className="text-slate-500 text-sm">No hay reservas pendientes.</p>
-          ) : (
-            <div className="space-y-3">
-              {(Array.isArray(reservations) ? reservations : []).map(r => (
-                <div key={r.id} className="flex justify-between items-center p-4 border border-slate-200 rounded-xl bg-slate-50">
-                  <div>
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-3">
-                        <p className="font-bold text-slate-800 text-lg">{r.group} - {r.activity}</p>
-                        {r.status === "confirmed" ? (
-                          <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full border border-emerald-200">Aceptada</span>
-                        ) : (
-                          <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-full border border-amber-200">Pendiente</span>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {r.dateStr.split(',').map((d, i) => (
-                          <span key={i} className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
-                            {new Date(d).toLocaleDateString()}
-                          </span>
-                        ))}
-                      </div>
+          {(() => {
+            const safeRes = Array.isArray(reservations) ? reservations : [];
+            if (safeRes.length === 0) {
+              return <p className="text-slate-500 text-sm">No hay reservas registradas.</p>;
+            }
+
+            const sortByDate = (a: Reservation, b: Reservation) => {
+              const dateA = a.dateStr.split(',')[0];
+              const dateB = b.dateStr.split(',')[0];
+              return new Date(dateA).getTime() - new Date(dateB).getTime();
+            };
+
+            const pendingRes = safeRes.filter(r => r.status !== 'confirmed' && r.status !== 'rejected').sort(sortByDate);
+            const confirmedRes = safeRes.filter(r => r.status === 'confirmed').sort(sortByDate);
+            const rejectedRes = safeRes.filter(r => r.status === 'rejected').sort(sortByDate);
+
+            const renderReservation = (r: Reservation) => (
+              <div key={r.id} className={`flex justify-between items-center p-4 border rounded-xl ${r.status === 'rejected' ? 'bg-red-50 border-red-200 opacity-75' : 'bg-slate-50 border-slate-200'}`}>
+                <div className="w-full">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-3">
+                      <p className={`font-bold text-lg ${r.status === 'rejected' ? 'text-red-900' : 'text-slate-800'}`}>{r.group} - {r.activity}</p>
+                      {r.status === "confirmed" ? (
+                        <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full border border-emerald-200">Aceptada</span>
+                      ) : r.status === "rejected" ? (
+                        <span className="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded-full border border-red-200">Rechazada</span>
+                      ) : (
+                        <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-full border border-amber-200">Pendiente</span>
+                      )}
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600 bg-white p-3 rounded-lg border border-slate-100">
-                      <div>
-                        <p><strong className="text-slate-700">Solicitante:</strong> {r.name} ({r.email})</p>
-                        <p><strong className="text-slate-700">Alumnos:</strong> {r.studentsCount}</p>
-                        {r.otherTeachers && <p><strong className="text-slate-700">Acompañantes:</strong> {r.otherTeachers}</p>}
-                        <p><strong className="text-slate-700">Llegada al centro:</strong> {r.arrivalTime}</p>
-                      </div>
-                      
-                      <div>
-                        <p><strong className="text-slate-700">Transporte:</strong> {r.needsTransport ? "Sí (Guagua)" : "No"}</p>
-                        {r.needsTransport && (
-                          <div className="pl-2 border-l-2 border-blue-200 ml-1 mt-1">
-                            <p>Salida: {r.transportDepartureTime}</p>
-                            <p>Recogida: {r.transportReturnTime}</p>
-                          </div>
-                        )}
-                        {r.notes && (
-                          <div className="mt-2 text-amber-700 bg-amber-50 p-2 rounded border border-amber-100 text-xs">
-                            <strong>Notas:</strong> {r.notes}
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex flex-col items-end gap-1">
+                      {r.dateStr.split(',').map((d, i) => (
+                        <span key={i} className={`text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap ${r.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
+                          {new Date(d).toLocaleDateString()}
+                        </span>
+                      ))}
                     </div>
                   </div>
+                  
+                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-3 rounded-lg border ${r.status === 'rejected' ? 'bg-red-50/50 border-red-100 text-red-800' : 'bg-white border-slate-100 text-slate-600'}`}>
+                    <div>
+                      <p><strong>Solicitante:</strong> {r.name} ({r.email})</p>
+                      <p><strong>Alumnos:</strong> {r.studentsCount}</p>
+                      {r.otherTeachers && <p><strong>Acompañantes:</strong> {r.otherTeachers}</p>}
+                      <p><strong>Llegada al centro:</strong> {r.arrivalTime}</p>
+                    </div>
+                    
+                    <div>
+                      <p><strong>Transporte:</strong> {r.needsTransport ? "Sí (Guagua)" : "No"}</p>
+                      {r.needsTransport && (
+                        <div className="pl-2 border-l-2 border-blue-200 ml-1 mt-1">
+                          <p>Salida: {r.transportDepartureTime}</p>
+                          <p>Recogida: {r.transportReturnTime}</p>
+                        </div>
+                      )}
+                      {r.notes && (
+                        <div className={`mt-2 p-2 rounded border text-xs ${r.status === 'rejected' ? 'bg-red-100 border-red-200 text-red-900' : 'text-amber-700 bg-amber-50 border-amber-100'}`}>
+                          <strong>Notas:</strong> {r.notes}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
                   <div className="mt-4 flex gap-3">
-                    {r.status !== "confirmed" && (
+                    {r.status !== "confirmed" && r.status !== "rejected" && (
                       <button 
                         onClick={() => handleAcceptRes(r.id)}
                         className="flex-1 text-emerald-700 hover:text-emerald-800 text-sm font-bold bg-emerald-50 hover:bg-emerald-100 px-3 py-2 rounded-lg border border-emerald-200 shadow-sm transition"
@@ -434,16 +449,36 @@ export default function AdminPage() {
                       onClick={() => handleDeleteRes(r.id)}
                       className="flex-1 text-red-500 hover:text-red-700 text-sm font-bold bg-white hover:bg-red-50 px-3 py-2 rounded-lg border border-red-200 shadow-sm transition"
                     >
-                      Borrar Reserva
+                      Borrar Permanentemente
                     </button>
                   </div>
                 </div>
-              ))}
-              {reservations.length === 0 && (
-                <p className="text-slate-500 text-center py-4">No hay reservas activas.</p>
-              )}
-            </div>
-          )}
+              </div>
+            );
+
+            return (
+              <div className="space-y-8">
+                {pendingRes.length > 0 && (
+                  <div>
+                    <h4 className="font-bold text-amber-600 mb-3 border-b border-slate-100 pb-2">Pendientes de Confirmación ({pendingRes.length})</h4>
+                    <div className="space-y-3">{pendingRes.map(renderReservation)}</div>
+                  </div>
+                )}
+                {confirmedRes.length > 0 && (
+                  <div>
+                    <h4 className="font-bold text-emerald-600 mb-3 border-b border-slate-100 pb-2">Reservas Confirmadas ({confirmedRes.length})</h4>
+                    <div className="space-y-3">{confirmedRes.map(renderReservation)}</div>
+                  </div>
+                )}
+                {rejectedRes.length > 0 && (
+                  <div>
+                    <h4 className="font-bold text-red-500 mb-3 border-b border-slate-100 pb-2">Reservas Rechazadas ({rejectedRes.length})</h4>
+                    <div className="space-y-3">{rejectedRes.map(renderReservation)}</div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
         
         {/* Módulo de Reportes PDF */}

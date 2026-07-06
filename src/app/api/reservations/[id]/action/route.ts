@@ -41,13 +41,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
       if (updateError) throw updateError;
     } else if (actionType === 'reject') {
-      // Borrar la reserva
-      const { error: deleteError } = await supabase
+      // Marcar como rechazada
+      const { error: rejectError } = await supabase
         .from('reservations')
-        .delete()
+        .update({ status: 'rejected' })
         .eq('id', id);
 
-      if (deleteError) throw deleteError;
+      if (rejectError) throw rejectError;
     }
 
     // Preparar el mailto

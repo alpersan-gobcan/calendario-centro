@@ -270,7 +270,7 @@ export default function Calendar() {
             const isBaseHidden = settings.hiddenBaseEvents?.includes(dateStr);
             const event = isBaseHidden ? undefined : specialEvents[dateStr];
             
-            const safeReservations = Array.isArray(reservations) ? reservations : [];
+            const safeReservations = Array.isArray(reservations) ? reservations.filter(r => r.status !== 'rejected') : [];
             const isGroupReserved = selectedGroups.length > 0 ? safeReservations.some(r => {
               if (r.dateStr.split(',').includes(dateStr)) {
                 const rGroups = r.group.split(', ');

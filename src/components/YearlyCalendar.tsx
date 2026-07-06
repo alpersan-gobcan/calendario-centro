@@ -224,7 +224,7 @@ export default function YearlyCalendar() {
           }
 
           if (filters.salidas) {
-            const safeReservations = Array.isArray(reservations) ? reservations : [];
+            const safeReservations = Array.isArray(reservations) ? reservations.filter(r => r.status !== 'rejected') : [];
             safeReservations.forEach(r => {
               const dates = r.dateStr.split(',');
               const groupsArray = r.group.split(', ');
