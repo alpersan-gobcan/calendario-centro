@@ -4,6 +4,19 @@ import { useState, useEffect } from "react";
 import { store, Reservation, Settings } from "@/lib/store";
 import AdminCalendar from "@/components/AdminCalendar";
 
+const ALL_GROUPS = [
+  "1º ESO A", "1º ESO B", "1º ESO C", "1º ESO D",
+  "2º ESO A", "2º ESO B", "2º ESO C", "2º ESO D",
+  "3º ESO A", "3º ESO B", "3º ESO C",
+  "4º ESO A", "4º ESO B", "4º ESO C",
+  "1º PDC", "2º PDC",
+  "1º BACH A", "1º BACH B", "1º BACH C",
+  "2º BACH A", "2º BACH B", "2º BACH C",
+  "1º FPB", "2º FPB",
+  "1º ITE", "2º ITE",
+  "1º IEA", "2º IEA"
+];
+
 export default function AdminPage() {
   const [isLogged, setIsLogged] = useState(false);
   const [password, setPassword] = useState("");
@@ -161,6 +174,12 @@ export default function AdminPage() {
     }
   };
 
+  const handleAcceptRes = async (id: string) => {
+    await store.updateReservationStatus(id, "confirmed");
+    const updatedRes = await store.getReservations();
+    setReservations(updatedRes);
+  };
+
   const getFilteredPrintReservations = () => {
     if (!printStartDate || !printEndDate) return [];
     const start = new Date(printStartDate);
@@ -234,6 +253,35 @@ export default function AdminPage() {
               />
               <p className="text-xs text-slate-400 mt-1">Se guardará de forma segura en la base de datos.</p>
             </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-600 mb-2">
+                Grupos Activos (Para el formulario de Reservas)
+              </label>
+              <div className="max-h-48 overflow-y-auto border border-slate-300 rounded-lg p-3 grid grid-cols-2 gap-2 bg-slate-50">
+                {ALL_GROUPS.map(g => {
+                  const isActive = settings.activeGroups ? settings.activeGroups.includes(g) : true;
+                  return (
+                    <label key={g} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={isActive}
+                        onChange={(e) => {
+                          const current = settings.activeGroups || [...ALL_GROUPS];
+                          const updated = e.target.checked 
+                            ? [...current, g] 
+                            : current.filter(x => x !== g);
+                          setSettings({ ...settings, activeGroups: updated });
+                        }}
+                        className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                      />
+                      {g}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
             <button 
               onClick={handleSaveSettings}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium w-full transition"
@@ -332,10 +380,21 @@ export default function AdminPage() {
                 <div key={r.id} className="flex justify-between items-center p-4 border border-slate-200 rounded-xl bg-slate-50">
                   <div>
                     <div className="flex justify-between items-start mb-2">
-                      <p className="font-bold text-slate-800 text-lg">{r.group} - {r.activity}</p>
-                      <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
-                        {new Date(r.dateStr).toLocaleDateString()}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <p className="font-bold text-slate-800 text-lg">{r.group} - {r.activity}</p>
+                        {r.status === "confirmed" ? (
+                          <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full border border-emerald-200">Aceptada</span>
+                        ) : (
+                          <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-full border border-amber-200">Pendiente</span>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {r.dateStr.split(',').map((d, i) => (
+                          <span key={i} className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
+                            {new Date(d).toLocaleDateString()}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600 bg-white p-3 rounded-lg border border-slate-100">
@@ -362,12 +421,22 @@ export default function AdminPage() {
                       </div>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleDeleteRes(r.id)}
-                    className="mt-4 w-full text-red-500 hover:text-red-700 text-sm font-bold bg-white hover:bg-red-50 px-3 py-2 rounded-lg border border-red-200 shadow-sm transition"
-                  >
-                    Borrar Reserva
-                  </button>
+                  <div className="mt-4 flex gap-3">
+                    {r.status !== "confirmed" && (
+                      <button 
+                        onClick={() => handleAcceptRes(r.id)}
+                        className="flex-1 text-emerald-700 hover:text-emerald-800 text-sm font-bold bg-emerald-50 hover:bg-emerald-100 px-3 py-2 rounded-lg border border-emerald-200 shadow-sm transition"
+                      >
+                        Aceptar Reserva
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => handleDeleteRes(r.id)}
+                      className="flex-1 text-red-500 hover:text-red-700 text-sm font-bold bg-white hover:bg-red-50 px-3 py-2 rounded-lg border border-red-200 shadow-sm transition"
+                    >
+                      Borrar Reserva
+                    </button>
+                  </div>
                 </div>
               ))}
               {reservations.length === 0 && (

@@ -3,6 +3,19 @@
 import { useState, useEffect } from "react";
 import { store, Reservation, Settings } from "@/lib/store";
 
+const ALL_GROUPS = [
+  "1º ESO A", "1º ESO B", "1º ESO C", "1º ESO D",
+  "2º ESO A", "2º ESO B", "2º ESO C", "2º ESO D",
+  "3º ESO A", "3º ESO B", "3º ESO C",
+  "4º ESO A", "4º ESO B", "4º ESO C",
+  "1º PDC", "2º PDC",
+  "1º BACH A", "1º BACH B", "1º BACH C",
+  "2º BACH A", "2º BACH B", "2º BACH C",
+  "1º FPB", "2º FPB",
+  "1º ITE", "2º ITE",
+  "1º IEA", "2º IEA"
+];
+
 // Días especiales extraídos del Excel
 const specialEvents: Record<string, { title: string, details: string, blockReservation?: boolean, color: string }> = {
   "2026-09-08": { title: "Día del Pino", details: "Festivo Día del Pino.", blockReservation: true, color: "rose" },
@@ -58,8 +71,9 @@ export default function Calendar() {
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   
   // Datos del formulario
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [formData, setFormData] = useState({ 
-    name: "", email: "", group: "", activity: "", 
+    name: "", email: "", activity: "", 
     studentsCount: "", notes: "", otherTeachers: "", 
     needsTransport: false, transportDepartureTime: "", transportReturnTime: "", arrivalTime: "" 
   });
@@ -109,8 +123,8 @@ export default function Calendar() {
     const dateStr = getFormatDateStr(currentYear, currentMonth, day);
     const event = specialEvents[dateStr];
 
-    if (!formData.group) {
-      alert("Por favor, selecciona primero tu grupo en el menú de la derecha.");
+    if (selectedGroups.length === 0) {
+      alert("Por favor, selecciona primero al menos un grupo en el menú de la derecha.");
       return;
     }
 
@@ -136,35 +150,34 @@ export default function Calendar() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    if (selectedDates.length > 0) {
+    if (selectedDates.length > 0 && selectedGroups.length > 0) {
       try {
-        for (const dateStr of selectedDates) {
-          await store.addReservation({
-            dateStr,
-            name: formData.name,
-            email: formData.email,
-            group: formData.group,
-            activity: formData.activity,
-            studentsCount: Number(formData.studentsCount),
-            notes: formData.notes,
-            otherTeachers: formData.otherTeachers,
-            needsTransport: formData.needsTransport,
-            transportDepartureTime: formData.transportDepartureTime,
-            transportReturnTime: formData.transportReturnTime,
-            arrivalTime: formData.arrivalTime,
-          });
-        }
+        await store.addReservation({
+          dateStr: selectedDates.sort().join(","),
+          name: formData.name,
+          email: formData.email,
+          group: selectedGroups.join(", "),
+          activity: formData.activity,
+          studentsCount: Number(formData.studentsCount),
+          notes: formData.notes,
+          otherTeachers: formData.otherTeachers,
+          needsTransport: formData.needsTransport,
+          transportDepartureTime: formData.transportDepartureTime,
+          transportReturnTime: formData.transportReturnTime,
+          arrivalTime: formData.arrivalTime,
+        });
         
         const updatedRes = await store.getReservations();
         setReservations(updatedRes);
         alert(`¡Reserva enviada para ${selectedDates.length} días! El vicedirector recibirá una notificación.`);
         
         setFormData({ 
-          name: "", email: "", group: "", activity: "", 
+          name: "", email: "", activity: "", 
           studentsCount: "", notes: "", otherTeachers: "", 
           needsTransport: false, transportDepartureTime: "", transportReturnTime: "", arrivalTime: "" 
         });
         setSelectedDates([]);
+        setSelectedGroups([]);
       } catch (err) {
         console.error("Error al guardar reserva:", err);
         alert("Hubo un error al enviar la reserva.");
@@ -258,7 +271,13 @@ export default function Calendar() {
             const event = isBaseHidden ? undefined : specialEvents[dateStr];
             
             const safeReservations = Array.isArray(reservations) ? reservations : [];
-            const isGroupReserved = formData.group ? safeReservations.some(r => r.dateStr === dateStr && r.group === formData.group) : false;
+            const isGroupReserved = selectedGroups.length > 0 ? safeReservations.some(r => {
+              if (r.dateStr.split(',').includes(dateStr)) {
+                const rGroups = r.group.split(', ');
+                return selectedGroups.some(g => rGroups.includes(g));
+              }
+              return false;
+            }) : false;
             
             // Comprobar días bloqueados por admin
             const adminBlocked = settings.blockedDays?.find(b => b.dateStr === dateStr);
@@ -285,7 +304,7 @@ export default function Calendar() {
               btnClasses += "bg-slate-700 text-white font-bold border-slate-800 opacity-90 hover:opacity-100 ";
             } else if (isWeekend) {
               btnClasses += "bg-slate-200 text-slate-500 border-slate-300 ";
-            } else if (tooClose || !formData.group) {
+            } else if (tooClose || selectedGroups.length === 0) {
               btnClasses += "bg-slate-50 text-slate-400 border-slate-200 opacity-50 cursor-not-allowed ";
             } else {
               btnClasses += "bg-white text-slate-700 hover:bg-slate-50 border-slate-100 hover:scale-105 ";
@@ -348,23 +367,29 @@ export default function Calendar() {
         </h3>
         
         <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
-          <label className="block text-sm font-bold text-slate-700 mb-2">1. Selecciona tu grupo</label>
-          <select required value={formData.group} onChange={e => setFormData({...formData, group: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition font-medium" disabled={isSubmitting}>
-            <option value="">Selecciona un grupo...</option>
-            <option value="1º ESO A">1º ESO A</option>
-            <option value="1º ESO B">1º ESO B</option>
-            <option value="2º ESO A">2º ESO A</option>
-            <option value="3º ESO A">3º ESO A</option>
-            <option value="4º ESO A">4º ESO A</option>
-            <option value="1º Bachillerato">1º Bachillerato</option>
-            <option value="2º Bachillerato">2º Bachillerato</option>
-            <option value="Formación Profesional">Formación Profesional</option>
-          </select>
+          <label className="block text-sm font-bold text-slate-700 mb-2">1. Selecciona los grupos</label>
+          <div className="max-h-48 overflow-y-auto border border-slate-300 rounded-lg p-3 bg-white grid grid-cols-2 gap-2">
+            {ALL_GROUPS.filter(g => !settings.activeGroups || settings.activeGroups.includes(g)).map(g => (
+              <label key={g} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input 
+                  type="checkbox"
+                  checked={selectedGroups.includes(g)}
+                  onChange={(e) => {
+                    if (e.target.checked) setSelectedGroups([...selectedGroups, g]);
+                    else setSelectedGroups(selectedGroups.filter(x => x !== g));
+                  }}
+                  className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                  disabled={isSubmitting}
+                />
+                {g}
+              </label>
+            ))}
+          </div>
         </div>
 
-        {!formData.group ? (
+        {selectedGroups.length === 0 ? (
           <p className="text-sm text-slate-500 mb-6">
-            Selecciona primero tu grupo para ver los días disponibles en el calendario.
+            Selecciona primero al menos un grupo para ver los días disponibles en el calendario.
           </p>
         ) : selectedDates.length > 0 ? (
           <p className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg mb-6 border border-blue-100">

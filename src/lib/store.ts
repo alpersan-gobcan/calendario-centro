@@ -12,6 +12,7 @@ export type Reservation = {
   transportDepartureTime?: string;
   transportReturnTime?: string;
   arrivalTime: string;
+  status?: "pending" | "confirmed";
   createdAt: number;
 };
 
@@ -20,6 +21,7 @@ export type Settings = {
   blockedDays: { dateStr: string; reason: string; id: string; type?: string }[];
   hiddenBaseEvents?: string[];
   adminPassword?: string;
+  activeGroups?: string[];
 };
 
 const RESERVATIONS_KEY = "reservations_v1";
@@ -59,6 +61,14 @@ export const store = {
     await fetch(`/api/reservations/${id}`, { method: 'DELETE' });
   },
 
+  updateReservationStatus: async (id: string, status: "pending" | "confirmed"): Promise<void> => {
+    await fetch(`/api/reservations/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+  },
+
   getSettings: async (): Promise<Settings> => {
     const defaultSettings = { minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] };
     try {
@@ -70,7 +80,8 @@ export const store = {
         ...data, 
         minDaysNotice: data.minDaysNotice ?? 7, 
         blockedDays: Array.isArray(data.blockedDays) ? data.blockedDays : [],
-        hiddenBaseEvents: Array.isArray(data.hiddenBaseEvents) ? data.hiddenBaseEvents : []
+        hiddenBaseEvents: Array.isArray(data.hiddenBaseEvents) ? data.hiddenBaseEvents : [],
+        activeGroups: Array.isArray(data.activeGroups) ? data.activeGroups : undefined
       };
     } catch (e) {
       return defaultSettings;

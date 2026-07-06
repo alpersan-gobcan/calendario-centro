@@ -103,7 +103,7 @@ function PrintContent() {
         <div className="grid grid-cols-7 bg-white">
           {calendarDays.map((d, i) => {
             const dateStr = `${d.date.getFullYear()}-${(d.date.getMonth()+1).toString().padStart(2,'0')}-${d.date.getDate().toString().padStart(2,'0')}`;
-            const dayReservations = (Array.isArray(reservations) ? reservations : []).filter(r => r.dateStr === dateStr);
+            const dayReservations = (Array.isArray(reservations) ? reservations : []).filter(r => r.dateStr.split(',').includes(dateStr));
             const dayBlocks = (settings.blockedDays || []).filter(b => b.dateStr === dateStr);
             const isBaseHidden = settings.hiddenBaseEvents?.includes(dateStr);
             const baseEvent = !isBaseHidden ? specialEvents[dateStr] : null;
@@ -130,18 +130,26 @@ function PrintContent() {
                   ))}
 
                   {/* Reservas */}
-                  {dayReservations.map(r => (
-                    <div key={r.id} className="bg-cyan-50 print:border-2 print:border-cyan-600 border-2 border-cyan-400 rounded-lg p-1.5 text-[10px] sm:text-xs break-inside-avoid shadow-sm overflow-hidden break-words">
-                      <div className="font-extrabold text-cyan-900 text-[11px] sm:text-sm leading-tight mb-0.5">{r.group}</div>
-                      <div className="text-cyan-800 font-medium leading-tight mb-1">{r.activity}</div>
-                      <div className="text-slate-600 font-medium leading-tight mb-0.5">👤 {r.name} ({r.studentsCount} alu)</div>
-                      {r.otherTeachers && <div className="text-slate-600 font-medium leading-tight mb-0.5">👥 {r.otherTeachers}</div>}
-                      
-                      <div className="text-slate-700 mt-1 font-bold bg-white/50 p-1 rounded text-[9px] sm:text-[10px] leading-tight">🕒 {r.transportDepartureTime || "Salida"} - {r.arrivalTime}</div>
-                      {r.needsTransport && <div className="text-slate-700 font-bold mt-0.5 text-[9px] sm:text-[10px] leading-tight">🚌 {r.transportReturnTime}</div>}
-                      {r.notes && <div className="text-slate-600 font-medium mt-1 bg-white p-1 rounded text-[9px] sm:text-[10px] leading-tight break-words">📝 {r.notes}</div>}
-                    </div>
-                  ))}
+                  {dayReservations.map(r => {
+                    const isConfirmed = r.status === "confirmed";
+                    const bgColor = isConfirmed ? "bg-cyan-50" : "bg-slate-50";
+                    const borderColor = isConfirmed ? "border-cyan-400 print:border-cyan-600" : "border-slate-300 print:border-slate-400";
+                    const titleColor = isConfirmed ? "text-cyan-900" : "text-slate-800";
+                    const subColor = isConfirmed ? "text-cyan-800" : "text-slate-700";
+                    
+                    return (
+                      <div key={r.id} className={`${bgColor} border-2 ${borderColor} rounded-lg p-1.5 text-[10px] sm:text-xs break-inside-avoid shadow-sm overflow-hidden break-words`}>
+                        <div className={`font-extrabold ${titleColor} text-[11px] sm:text-sm leading-tight mb-0.5`}>{r.group}</div>
+                        <div className={`${subColor} font-medium leading-tight mb-1`}>{r.activity} {isConfirmed ? "" : "(Pendiente)"}</div>
+                        <div className="text-slate-600 font-medium leading-tight mb-0.5">👤 {r.name} ({r.studentsCount} alu)</div>
+                        {r.otherTeachers && <div className="text-slate-600 font-medium leading-tight mb-0.5">👥 {r.otherTeachers}</div>}
+                        
+                        <div className="text-slate-700 mt-1 font-bold bg-white/50 p-1 rounded text-[9px] sm:text-[10px] leading-tight">🕒 {r.transportDepartureTime || "Salida"} - {r.arrivalTime}</div>
+                        {r.needsTransport && <div className="text-slate-700 font-bold mt-0.5 text-[9px] sm:text-[10px] leading-tight">🚌 {r.transportReturnTime}</div>}
+                        {r.notes && <div className="text-slate-600 font-medium mt-1 bg-white p-1 rounded text-[9px] sm:text-[10px] leading-tight break-words">📝 {r.notes}</div>}
+                      </div>
+                    );
+                  })}
 
                 </div>
               </div>

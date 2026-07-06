@@ -36,6 +36,7 @@ const colorStyles: Record<string, string> = {
   amber: "bg-amber-400 text-white hover:bg-amber-500",
   cyan: "bg-cyan-500 text-white hover:bg-cyan-600",
   indigo: "bg-indigo-400 text-white hover:bg-indigo-500",
+  slate: "bg-slate-400 text-white hover:bg-slate-500",
 };
 
 const textColors: Record<string, string> = {
@@ -46,6 +47,7 @@ const textColors: Record<string, string> = {
   amber: "text-amber-500",
   cyan: "text-cyan-600",
   indigo: "text-indigo-500",
+  slate: "text-slate-500",
 };
 
 const months = [
@@ -224,18 +226,25 @@ export default function YearlyCalendar() {
           if (filters.salidas) {
             const safeReservations = Array.isArray(reservations) ? reservations : [];
             safeReservations.forEach(r => {
-              const d = new Date(r.dateStr);
-              if (d.getFullYear() === m.year && d.getMonth() === m.month) {
-                let transportInfo = r.needsTransport ? `Salida guagua: ${r.transportDepartureTime}` : "Sin transporte";
-                let details = `Actividad: ${r.activity}\nGrupo: ${r.group}\nAlumnos: ${r.studentsCount}\n${transportInfo}\nLlegada: ${r.arrivalTime}`;
-                eventsInMonth.push({ 
-                  dateStr: r.dateStr, 
-                  title: `Salida\n${r.group}`, 
-                  details: details, 
-                  color: "cyan", 
-                  type: "salida" 
-                });
-              }
+              const dates = r.dateStr.split(',');
+              const groupsArray = r.group.split(', ');
+              const groupTitle = groupsArray.length > 1 ? `${groupsArray.length} Grupos` : r.group;
+              const status = r.status || "pending";
+              
+              dates.forEach(dStr => {
+                const d = new Date(dStr);
+                if (d.getFullYear() === m.year && d.getMonth() === m.month) {
+                  let transportInfo = r.needsTransport ? `Salida guagua: ${r.transportDepartureTime}` : "Sin transporte";
+                  let details = `Actividad: ${r.activity}\nGrupos: ${r.group}\nAlumnos: ${r.studentsCount}\n${transportInfo}\nLlegada: ${r.arrivalTime}\nEstado: ${status === "confirmed" ? "Aceptada" : "Pendiente"}`;
+                  eventsInMonth.push({ 
+                    dateStr: dStr, 
+                    title: `Salida\n${groupTitle}`, 
+                    details: details, 
+                    color: status === "confirmed" ? "cyan" : "slate", 
+                    type: "salida" 
+                  });
+                }
+              });
             });
           }
 
