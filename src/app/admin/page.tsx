@@ -91,7 +91,12 @@ export default function AdminPage() {
     
     for (const line of lines) {
       if (!line.trim()) continue;
-      const parts = line.split(';');
+      
+      let parts = line.split(';');
+      if (parts.length < 2) {
+         parts = line.split(',');
+      }
+      
       if (parts.length >= 2) {
         let dateStr = parts[0].trim();
         const reason = parts[1].trim();

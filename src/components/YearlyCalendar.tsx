@@ -92,7 +92,8 @@ export default function YearlyCalendar() {
     familias: true,
     evaluacion: true,
     boletines: true,
-    relevantes: true
+    relevantes: true,
+    restringidos: true
   });
 
   const categoryMap: Record<string, { type: string, color: string, filterKey: keyof typeof filters }> = {
@@ -103,6 +104,7 @@ export default function YearlyCalendar() {
     "Sesiones de evaluación": { type: "evaluacion", color: "emerald", filterKey: "evaluacion" },
     "Entrega de Boletines": { type: "boletines", color: "blue", filterKey: "boletines" },
     "Días relevantes": { type: "relevantes", color: "indigo", filterKey: "relevantes" },
+    "Días Restringidos": { type: "restringidos", color: "orange", filterKey: "restringidos" },
   };
 
   const [isLoading, setIsLoading] = useState(true);
@@ -223,6 +225,10 @@ export default function YearlyCalendar() {
                 <input type="checkbox" checked={filters.relevantes} onChange={e => setFilters({...filters, relevantes: e.target.checked})} className="w-5 h-5 text-amber-600 rounded focus:ring-amber-600" />
                 <span className="text-slate-600 font-medium">Relevantes</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={filters.restringidos} onChange={e => setFilters({...filters, restringidos: e.target.checked})} className="w-5 h-5 text-orange-500 rounded focus:ring-orange-500" />
+                <span className="text-slate-600 font-medium">Restringidos</span>
+              </label>
             </div>
           )}
         </div>
@@ -262,6 +268,7 @@ export default function YearlyCalendar() {
                  else if (lowerType.includes("evaluaci")) catKey = "Sesiones de evaluación";
                  else if (lowerType.includes("boletin")) catKey = "Entrega de Boletines";
                  else if (lowerType.includes("salida") || lowerType.includes("actividad")) catKey = "Actividades";
+                 else if (lowerType.includes("restringido")) catKey = "Días Restringidos";
 
                  const cat = categoryMap[catKey] || categoryMap["Días relevantes"];
                  if (filters[cat.filterKey]) {
