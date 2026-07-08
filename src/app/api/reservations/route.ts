@@ -47,12 +47,15 @@ export async function POST(request: Request) {
           <p><strong>Email:</strong> ${body.email}</p>
           <p><strong>Grupo:</strong> ${body.group}</p>
           <p><strong>Actividad:</strong> ${body.activity}</p>
+          <p><strong>Lugar:</strong> ${body.location}</p>
           <p><strong>Fecha:</strong> ${body.dateStr}</p>
           <p><strong>Alumnos participantes:</strong> ${body.studentsCount}</p>
           <p><strong>Hora de salida:</strong> ${body.transportDepartureTime}</p>
           <p><strong>Hora est. llegada:</strong> ${body.arrivalTime}</p>
           ${body.needsTransport ? '<p><strong>Requiere transporte (Guagua)</strong></p>' : ''}
           ${body.otherTeachers ? `<p><strong>Acompañantes:</strong> ${body.otherTeachers}</p>` : ''}
+          ${body.cost ? `<p><strong>Coste:</strong> ${body.cost}</p>` : ''}
+          ${body.description ? `<p><strong>Descripción:</strong> ${body.description}</p>` : ''}
           ${body.notes ? `<p><strong>Notas:</strong> ${body.notes}</p>` : ''}
           ${warnings ? `<div style="margin-top: 15px; padding: 15px; background-color: #fee2e2; border-left: 4px solid #ef4444; border-radius: 4px;">
             <strong style="color: #b91c1c;">⚠️ CUIDADO, coincide con:</strong>

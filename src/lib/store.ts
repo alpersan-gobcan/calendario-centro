@@ -5,6 +5,9 @@ export type Reservation = {
   email: string;
   group: string;
   activity: string;
+  location: string;
+  cost?: string;
+  description?: string;
   studentsCount: number;
   notes?: string;
   otherTeachers?: string;

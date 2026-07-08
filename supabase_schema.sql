@@ -6,6 +6,9 @@ CREATE TABLE reservations (
   email text NOT NULL,
   "group" text NOT NULL,
   activity text NOT NULL,
+  location text DEFAULT '',
+  cost text,
+  description text,
   studentsCount integer NOT NULL,
   notes text,
   otherTeachers text,
@@ -13,6 +16,7 @@ CREATE TABLE reservations (
   transportDepartureTime text,
   transportReturnTime text,
   arrivalTime text NOT NULL,
+  status text DEFAULT 'pending',
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

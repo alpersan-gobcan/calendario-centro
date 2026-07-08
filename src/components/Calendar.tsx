@@ -74,7 +74,7 @@ export default function Calendar() {
   // Datos del formulario
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [formData, setFormData] = useState({ 
-    name: "", email: "", activity: "", 
+    name: "", email: "", activity: "", location: "", cost: "", description: "",
     studentsCount: "", notes: "", otherTeachers: "", 
     needsTransport: false, transportDepartureTime: "", transportReturnTime: "", arrivalTime: "" 
   });
@@ -166,6 +166,9 @@ export default function Calendar() {
           email: formData.email,
           group: selectedGroups.join(", "),
           activity: formData.activity,
+          location: formData.location,
+          cost: formData.cost,
+          description: formData.description,
           studentsCount: Number(formData.studentsCount),
           notes: formData.notes,
           otherTeachers: formData.otherTeachers,
@@ -181,7 +184,7 @@ export default function Calendar() {
         alert(`¡Reserva enviada para ${selectedDates.length} días! El vicedirector recibirá una notificación.`);
         
         setFormData({ 
-          name: "", email: "", activity: "", 
+          name: "", email: "", activity: "", location: "", cost: "", description: "",
           studentsCount: "", notes: "", otherTeachers: "", 
           needsTransport: false, transportDepartureTime: "", transportReturnTime: "", arrivalTime: "" 
         });
@@ -404,13 +407,29 @@ export default function Calendar() {
             <label className="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico <span className="text-red-500">*</span></label>
             <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="correo@centro.edu" disabled={selectedDates.length === 0 || isSubmitting} />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Actividad / Destino <span className="text-red-500">*</span></label>
-            <input required type="text" value={formData.activity} onChange={e => setFormData({...formData, activity: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: Visita al museo" disabled={selectedDates.length === 0 || isSubmitting} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Actividad <span className="text-red-500">*</span></label>
+              <input required type="text" value={formData.activity} onChange={e => setFormData({...formData, activity: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: Visita al museo" disabled={selectedDates.length === 0 || isSubmitting} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Lugar <span className="text-red-500">*</span></label>
+              <input required type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: Museo Elder" disabled={selectedDates.length === 0 || isSubmitting} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Coste de la actividad (Opcional)</label>
+              <input type="text" value={formData.cost} onChange={e => setFormData({...formData, cost: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: 5€ / Gratuito" disabled={selectedDates.length === 0 || isSubmitting} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Número de alumnado <span className="text-red-500">*</span></label>
+              <input required type="number" min="1" value={formData.studentsCount} onChange={e => setFormData({...formData, studentsCount: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: 25" disabled={selectedDates.length === 0 || isSubmitting} />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Número de alumnado participante <span className="text-red-500">*</span></label>
-            <input required type="number" min="1" value={formData.studentsCount} onChange={e => setFormData({...formData, studentsCount: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Ej: 25" disabled={selectedDates.length === 0 || isSubmitting} />
+            <label className="block text-sm font-medium text-slate-700 mb-1">Descripción de la actividad (Opcional)</label>
+            <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm" placeholder="Breve descripción de lo que se va a hacer..." rows={2} disabled={selectedDates.length === 0 || isSubmitting}></textarea>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Cosas a tener en cuenta (Opcional)</label>

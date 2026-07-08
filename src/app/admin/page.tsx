@@ -462,7 +462,7 @@ export default function AdminPage() {
                 <div className="w-full">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-3">
-                      <p className={`font-bold text-lg ${r.status === 'rejected' ? 'text-red-900' : 'text-slate-800'}`}>{r.group} - {r.activity}</p>
+                      <p className={`font-bold text-lg ${r.status === 'rejected' ? 'text-red-900' : 'text-slate-800'}`}>{r.group} - {r.activity} ({r.location})</p>
                       {r.status === "confirmed" ? (
                         <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full border border-emerald-200">Aceptada</span>
                       ) : r.status === "rejected" ? (
@@ -486,6 +486,7 @@ export default function AdminPage() {
                       <p><strong>Alumnos:</strong> {r.studentsCount}</p>
                       {r.otherTeachers && <p><strong>Acompañantes:</strong> {r.otherTeachers}</p>}
                       <p><strong>Llegada al centro:</strong> {r.arrivalTime}</p>
+                      {r.cost && <p><strong>Coste:</strong> {r.cost}</p>}
                     </div>
                     
                     <div>
@@ -494,6 +495,11 @@ export default function AdminPage() {
                         <div className="pl-2 border-l-2 border-blue-200 ml-1 mt-1">
                           <p>Salida: {r.transportDepartureTime}</p>
                           <p>Recogida: {r.transportReturnTime}</p>
+                        </div>
+                      )}
+                      {r.description && (
+                        <div className={`mt-2 p-2 rounded border text-xs ${r.status === 'rejected' ? 'bg-red-100 border-red-200 text-red-900' : 'text-blue-700 bg-blue-50 border-blue-100'}`}>
+                          <strong>Descripción:</strong> {r.description}
                         </div>
                       )}
                       {r.notes && (
@@ -609,24 +615,46 @@ export default function AdminPage() {
             <h2 className="text-2xl font-bold text-slate-800 mb-4 border-b pb-2">Editar Reserva</h2>
             <div className="overflow-y-auto pr-2 space-y-4 flex-grow">
               
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Actividad</label>
-                <input 
-                  type="text" 
-                  value={editForm.activity || ""} 
-                  onChange={e => setEditForm(prev => ({ ...prev, activity: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Actividad</label>
+                  <input 
+                    type="text" 
+                    value={editForm.activity || ""} 
+                    onChange={e => setEditForm(prev => ({ ...prev, activity: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Lugar</label>
+                  <input 
+                    type="text" 
+                    value={editForm.location || ""} 
+                    onChange={e => setEditForm(prev => ({ ...prev, location: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Grupo(s)</label>
-                <input 
-                  type="text" 
-                  value={editForm.group || ""} 
-                  onChange={e => setEditForm(prev => ({ ...prev, group: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Grupo(s)</label>
+                  <input 
+                    type="text" 
+                    value={editForm.group || ""} 
+                    onChange={e => setEditForm(prev => ({ ...prev, group: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Coste (Opcional)</label>
+                  <input 
+                    type="text" 
+                    value={editForm.cost || ""} 
+                    onChange={e => setEditForm(prev => ({ ...prev, cost: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                  />
+                </div>
               </div>
 
               <div>
@@ -694,11 +722,20 @@ export default function AdminPage() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Descripción de la actividad</label>
+                <textarea 
+                  value={editForm.description || ""} 
+                  onChange={e => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none text-sm" 
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Notas / Observaciones</label>
                 <textarea 
                   value={editForm.notes || ""} 
                   onChange={e => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none" 
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none text-sm" 
                 />
               </div>
 
