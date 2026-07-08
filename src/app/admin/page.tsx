@@ -441,9 +441,21 @@ export default function AdminPage() {
               return new Date(dateA).getTime() - new Date(dateB).getTime();
             };
 
-            const pendingRes = safeRes.filter(r => r.status !== 'confirmed' && r.status !== 'rejected').sort(sortByDate);
-            const confirmedRes = safeRes.filter(r => r.status === 'confirmed').sort(sortByDate);
-            const rejectedRes = safeRes.filter(r => r.status === 'rejected').sort(sortByDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const isPast = (r: Reservation) => {
+              const dates = r.dateStr.split(',');
+              const lastDate = dates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+              return new Date(lastDate) < today;
+            };
+
+            const upcomingRes = safeRes.filter(r => !isPast(r));
+            const pastResAll = safeRes.filter(r => isPast(r)).sort((a, b) => new Date(b.dateStr.split(',')[0]).getTime() - new Date(a.dateStr.split(',')[0]).getTime());
+
+            const pendingRes = upcomingRes.filter(r => r.status !== 'confirmed' && r.status !== 'rejected').sort(sortByDate);
+            const confirmedRes = upcomingRes.filter(r => r.status === 'confirmed').sort(sortByDate);
+            const rejectedRes = upcomingRes.filter(r => r.status === 'rejected').sort(sortByDate);
 
             const renderReservation = (r: Reservation) => (
               <div key={r.id} className={`flex justify-between items-center p-4 border rounded-xl ${r.status === 'rejected' ? 'bg-red-50 border-red-200 opacity-75' : 'bg-slate-50 border-slate-200'}`}>
@@ -522,21 +534,36 @@ export default function AdminPage() {
               <div className="space-y-8">
                 {pendingRes.length > 0 && (
                   <div>
-                    <h4 className="font-bold text-amber-600 mb-3 border-b border-slate-100 pb-2">Pendientes de Confirmación ({pendingRes.length})</h4>
+                    <h4 className="font-bold text-amber-600 mb-3 border-b border-slate-100 pb-2">Próximas - Pendientes ({pendingRes.length})</h4>
                     <div className="space-y-3">{pendingRes.map(renderReservation)}</div>
                   </div>
                 )}
                 {confirmedRes.length > 0 && (
                   <div>
-                    <h4 className="font-bold text-emerald-600 mb-3 border-b border-slate-100 pb-2">Reservas Confirmadas ({confirmedRes.length})</h4>
+                    <h4 className="font-bold text-emerald-600 mb-3 border-b border-slate-100 pb-2">Próximas - Confirmadas ({confirmedRes.length})</h4>
                     <div className="space-y-3">{confirmedRes.map(renderReservation)}</div>
                   </div>
                 )}
                 {rejectedRes.length > 0 && (
                   <div>
-                    <h4 className="font-bold text-red-500 mb-3 border-b border-slate-100 pb-2">Reservas Rechazadas ({rejectedRes.length})</h4>
+                    <h4 className="font-bold text-red-500 mb-3 border-b border-slate-100 pb-2">Próximas - Rechazadas ({rejectedRes.length})</h4>
                     <div className="space-y-3">{rejectedRes.map(renderReservation)}</div>
                   </div>
+                )}
+                {pastResAll.length > 0 && (
+                  <details className="group border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
+                    <summary className="flex items-center cursor-pointer font-bold text-slate-600 p-4 bg-slate-200 hover:bg-slate-300 transition">
+                      Historial de Reservas Pasadas ({pastResAll.length})
+                      <span className="ml-auto text-sm opacity-60 group-open:hidden">▼ Mostrar</span>
+                      <span className="ml-auto text-sm opacity-60 hidden group-open:block">▲ Ocultar</span>
+                    </summary>
+                    <div className="p-4 space-y-3 bg-white">
+                      {pastResAll.map(renderReservation)}
+                    </div>
+                  </details>
+                )}
+                {pendingRes.length === 0 && confirmedRes.length === 0 && rejectedRes.length === 0 && (
+                  <p className="text-slate-500 text-sm">No hay reservas próximas registradas.</p>
                 )}
               </div>
             );
@@ -602,18 +629,28 @@ export default function AdminPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Alumnos</label>
+                <input 
+                  type="number" 
+                  value={editForm.studentsCount || 0} 
+                  onChange={e => setEditForm(prev => ({ ...prev, studentsCount: Number(e.target.value) }))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Alumnos</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Hora de salida del centro</label>
                   <input 
-                    type="number" 
-                    value={editForm.studentsCount || 0} 
-                    onChange={e => setEditForm(prev => ({ ...prev, studentsCount: Number(e.target.value) }))}
+                    type="time" 
+                    value={editForm.transportDepartureTime || ""} 
+                    onChange={e => setEditForm(prev => ({ ...prev, transportDepartureTime: e.target.value }))}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Llegada al centro</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Hora est. de llegada</label>
                   <input 
                     type="time" 
                     value={editForm.arrivalTime || ""} 
@@ -644,25 +681,14 @@ export default function AdminPage() {
                   ¿Necesita Guagua?
                 </label>
                 {editForm.needsTransport && (
-                  <div className="grid grid-cols-2 gap-4 mt-2 pl-6">
-                    <div>
-                      <label className="block text-sm font-medium text-blue-800 mb-1">Hora Salida</label>
-                      <input 
-                        type="time" 
-                        value={editForm.transportDepartureTime || ""} 
-                        onChange={e => setEditForm(prev => ({ ...prev, transportDepartureTime: e.target.value }))}
-                        className="w-full px-3 py-2 border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-blue-800 mb-1">Hora Recogida</label>
-                      <input 
-                        type="time" 
-                        value={editForm.transportReturnTime || ""} 
-                        onChange={e => setEditForm(prev => ({ ...prev, transportReturnTime: e.target.value }))}
-                        className="w-full px-3 py-2 border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
-                      />
-                    </div>
+                  <div className="mt-2 pl-6">
+                    <label className="block text-xs font-medium text-blue-800 mb-1">Hora de recogida en el lugar de la actividad para la vuelta</label>
+                    <input 
+                      type="time" 
+                      value={editForm.transportReturnTime || ""} 
+                      onChange={e => setEditForm(prev => ({ ...prev, transportReturnTime: e.target.value }))}
+                      className="w-full px-3 py-2 border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                    />
                   </div>
                 )}
               </div>
