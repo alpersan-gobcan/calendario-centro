@@ -150,6 +150,13 @@ export default function Calendar() {
           if (adminEvent) {
             warningsList.push(`${dStr}: ${adminEvent.type || adminEvent.reason}`);
           }
+          
+          const safeReservations = Array.isArray(reservations) ? reservations.filter(r => r.status !== 'rejected') : [];
+          const resForDay = safeReservations.filter(r => r.dateStr.split(',').includes(dStr));
+          if (resForDay.length > 0) {
+            const groupNames = resForDay.map(r => r.group).join(", ");
+            warningsList.push(`${dStr}: Ya hay reservas previas (${groupNames})`);
+          }
         });
         const warnings = warningsList.length > 0 ? Array.from(new Set(warningsList)).join(" | ") : undefined;
 
