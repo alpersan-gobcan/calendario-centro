@@ -301,8 +301,11 @@ export default function YearlyCalendar() {
               dates.forEach(dStr => {
                 const d = new Date(dStr);
                 if (d.getFullYear() === m.year && d.getMonth() === m.month) {
-                  let transportInfo = r.needsTransport ? `Salida guagua: ${r.transportDepartureTime}` : "Sin transporte";
-                  let details = `Actividad: ${r.activity} (${r.location || 'Sin lugar'})\nGrupos: ${r.group}\nAlumnos: ${r.studentsCount}\n${transportInfo}\nLlegada: ${r.arrivalTime}\nEstado: ${status === "confirmed" ? "Aceptada" : "Pendiente"}`;
+                  let transportInfo = `Salida del centro: ${r.transportDepartureTime}`;
+                  if (r.needsTransport) {
+                    transportInfo += `\nRecogida guagua: ${r.transportReturnTime}`;
+                  }
+                  let details = `Actividad: ${r.activity} (${r.location || 'Sin lugar'})\nGrupos: ${r.group}\nAlumnos: ${r.studentsCount}\n${transportInfo}\nLlegada al centro: ${r.arrivalTime}\nEstado: ${status === "confirmed" ? "Aceptada" : "Pendiente"}`;
                   eventsInMonth.push({ 
                     dateStr: dStr, 
                     title: `Actividad\n${groupTitle}`, 

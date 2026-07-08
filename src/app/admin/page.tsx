@@ -36,6 +36,10 @@ export default function AdminPage() {
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [editForm, setEditForm] = useState<Partial<Reservation>>({});
 
+  const [authReservation, setAuthReservation] = useState<Reservation | null>(null);
+  const [authForm, setAuthForm] = useState<any>({});
+  const [isGeneratingAuth, setIsGeneratingAuth] = useState(false);
+
   const handleEditClick = (r: Reservation) => {
     setEditingReservation(r);
     setEditForm(r);
@@ -50,6 +54,51 @@ export default function AdminPage() {
     } catch (e) {
       alert("Error al actualizar la reserva");
     }
+  };
+
+  const handleAuthClick = (r: Reservation) => {
+    setAuthReservation(r);
+    setAuthForm({
+      activity: r.activity,
+      location: r.location,
+      dateStr: r.dateStr,
+      transportDepartureTime: r.transportDepartureTime,
+      transportReturnTime: r.transportReturnTime || "",
+      cost: r.cost || "Gratuito",
+      group: r.group,
+      organizer: r.name,
+      teachers: r.otherTeachers || "",
+      description: r.description || "",
+      notes: r.notes || "",
+      authType: "Actividad Complementaria",
+      lastDay: ""
+    });
+  };
+
+  const handleGenerateAuth = async () => {
+    setIsGeneratingAuth(true);
+    try {
+      const res = await fetch('/api/generate-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(authForm)
+      });
+      if (!res.ok) throw new Error("Error al generar autorización");
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Autorizacion_${authForm.activity.replace(/\s+/g, '_')}.odt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      setAuthReservation(null);
+    } catch (e) {
+      alert("Error al generar el documento.");
+    }
+    setIsGeneratingAuth(false);
   };
 
   useEffect(() => {
@@ -491,12 +540,10 @@ export default function AdminPage() {
                     
                     <div>
                       <p><strong>Transporte:</strong> {r.needsTransport ? "Sí (Guagua)" : "No"}</p>
-                      {r.needsTransport && (
-                        <div className="pl-2 border-l-2 border-blue-200 ml-1 mt-1">
-                          <p>Salida: {r.transportDepartureTime}</p>
-                          <p>Recogida: {r.transportReturnTime}</p>
-                        </div>
-                      )}
+                      <div className="pl-2 border-l-2 border-blue-200 ml-1 mt-1">
+                        <p>Salida del centro: {r.transportDepartureTime}</p>
+                        {r.needsTransport && <p>Recogida guagua: {r.transportReturnTime}</p>}
+                      </div>
                       {r.description && (
                         <div className={`mt-2 p-2 rounded border text-xs ${r.status === 'rejected' ? 'bg-red-100 border-red-200 text-red-900' : 'text-blue-700 bg-blue-50 border-blue-100'}`}>
                           <strong>Descripción:</strong> {r.description}
@@ -510,7 +557,15 @@ export default function AdminPage() {
                     </div>
                   </div>
                   
-                  <div className="mt-4 flex gap-3">
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {r.status === "confirmed" && (
+                      <button 
+                        onClick={() => handleAuthClick(r)}
+                        className="flex-1 min-w-[200px] text-purple-700 hover:text-purple-800 text-sm font-bold bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-lg border border-purple-200 shadow-sm transition flex items-center justify-center gap-2"
+                      >
+                        📄 Generar Autorización
+                      </button>
+                    )}
                     {r.status !== "confirmed" && r.status !== "rejected" && (
                       <button 
                         onClick={() => handleAcceptRes(r.id)}
@@ -753,6 +808,167 @@ export default function AdminPage() {
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-md"
               >
                 Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {authReservation && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 flex flex-col max-h-[90vh]">
+            <h2 className="text-2xl font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2">📄 Generar Autorización</h2>
+            <div className="overflow-y-auto pr-2 space-y-4 flex-grow text-sm">
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de Actividad</label>
+                  <select 
+                    value={authForm.authType} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, authType: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="Actividad Complementaria">Complementaria</option>
+                    <option value="Actividad Extraescolar">Extraescolar</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Último día de entrega</label>
+                  <input 
+                    type="date" 
+                    value={authForm.lastDay} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, lastDay: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500" 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Actividad</label>
+                  <input 
+                    type="text" 
+                    value={authForm.activity} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, activity: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Lugar</label>
+                  <input 
+                    type="text" 
+                    value={authForm.location} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, location: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500" 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Fechas</label>
+                  <input 
+                    type="text" 
+                    value={authForm.dateStr} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, dateStr: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Grupos</label>
+                  <input 
+                    type="text" 
+                    value={authForm.group} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, group: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500" 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Salida (Centro)</label>
+                  <input 
+                    type="text" 
+                    value={authForm.transportDepartureTime} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, transportDepartureTime: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Llegada / Recogida</label>
+                  <input 
+                    type="text" 
+                    value={authForm.transportReturnTime} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, transportReturnTime: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Coste</label>
+                  <input 
+                    type="text" 
+                    value={authForm.cost} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, cost: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500" 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Organiza (Solicitante)</label>
+                  <input 
+                    type="text" 
+                    value={authForm.organizer} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, organizer: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Profesorado Acompañante</label>
+                  <input 
+                    type="text" 
+                    value={authForm.teachers} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, teachers: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Descripción</label>
+                <textarea 
+                  value={authForm.description} 
+                  onChange={e => setAuthForm((prev: any) => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500 h-16 resize-none" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Observaciones</label>
+                <textarea 
+                  value={authForm.notes} 
+                  onChange={e => setAuthForm((prev: any) => ({ ...prev, notes: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500 h-16 resize-none" 
+                />
+              </div>
+
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-3 border-t pt-4">
+              <button 
+                onClick={() => setAuthReservation(null)}
+                className="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium rounded-lg transition"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleGenerateAuth}
+                disabled={isGeneratingAuth}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-sm transition disabled:opacity-50"
+              >
+                {isGeneratingAuth ? 'Generando...' : 'Generar y Descargar ODT'}
               </button>
             </div>
           </div>
