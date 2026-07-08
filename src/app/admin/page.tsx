@@ -63,7 +63,7 @@ export default function AdminPage() {
       location: r.location,
       dateStr: r.dateStr,
       transportDepartureTime: r.transportDepartureTime,
-      transportReturnTime: r.transportReturnTime || "",
+      arrivalTime: r.arrivalTime || r.transportReturnTime || "",
       cost: r.cost || "Gratuito",
       group: r.group,
       organizer: r.name,
@@ -899,8 +899,8 @@ export default function AdminPage() {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Llegada / Recogida</label>
                   <input 
                     type="text" 
-                    value={authForm.transportReturnTime} 
-                    onChange={e => setAuthForm((prev: any) => ({ ...prev, transportReturnTime: e.target.value }))}
+                    value={authForm.arrivalTime} 
+                    onChange={e => setAuthForm((prev: any) => ({ ...prev, arrivalTime: e.target.value }))}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500" 
                   />
                 </div>

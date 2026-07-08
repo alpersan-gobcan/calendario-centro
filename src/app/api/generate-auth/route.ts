@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       '{{FECHA}}': data.dateStr || '',
       '{{LUGAR}}': data.location || '',
       '{{HORA_SALIDA}}': data.transportDepartureTime || '',
-      '{{HORA_LLEGADA}}': data.transportReturnTime || '',
+      '{{HORA_LLEGADA}}': data.arrivalTime || '',
       '{{COSTE}}': data.cost || '',
       '{{GRUPOS}}': data.group || '',
       '{{ORGANIZA}}': data.organizer || '',
@@ -58,12 +58,13 @@ export async function POST(request: Request) {
       });
     };
 
-    // Replace all tags
+    // Replace all tags using regex to handle LibreOffice XML splits (e.g. {{<text:span>LAST_DAY</text:span>}})
     for (const [tag, value] of Object.entries(replacements)) {
-      // Escape the value to prevent XML corruption
       const safeValue = escapeXml(value);
-      // Use global replacement
-      contentXml = contentXml.split(tag).join(safeValue);
+      const chars = tag.split('').map(c => (c === '{' || c === '}') ? '\\' + c : c);
+      const pattern = chars.join('(?:<[^>]+>)*');
+      const regex = new RegExp(pattern, 'g');
+      contentXml = contentXml.replace(regex, safeValue);
     }
 
     // Update the content.xml in the zip
