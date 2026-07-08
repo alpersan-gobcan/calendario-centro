@@ -307,14 +307,43 @@ export default function AdminPage() {
           
           <hr className="my-6 border-slate-200" />
           
-          <h3 className="text-xl font-bold text-slate-700 mb-4">Bloquear Fechas</h3>
+          <h3 className="text-xl font-bold text-slate-700 mb-4">Bloquear Fechas Manualmente</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Días a bloquear ({newBlockDates.length} seleccionados)</label>
-              <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-200">
-                Selecciona uno o varios días haciendo clic en el "Buscador y Borrador de Eventos" (calendario de la derecha o inferior).
-              </div>
+              <label className="block text-sm font-medium text-slate-600 mb-2">Paso 1: Selecciona los días en el calendario</label>
+              <AdminCalendar 
+                reservations={reservations} 
+                settings={settings} 
+                selectedDates={newBlockDates}
+                onToggleDate={(dateStr) => {
+                  setNewBlockDates(prev => 
+                    prev.includes(dateStr) 
+                      ? prev.filter(d => d !== dateStr) 
+                      : [...prev, dateStr]
+                  );
+                }}
+                onDeleteReservation={handleDeleteRes} 
+                onDeleteBlock={handleRemoveBlock} 
+                onHideBaseEvent={async (dateStr) => {
+                  const updatedSettings = {
+                    ...settings,
+                    hiddenBaseEvents: [...(settings.hiddenBaseEvents || []), dateStr]
+                  };
+                  setSettings(updatedSettings);
+                  await store.saveSettings(updatedSettings);
+                }} 
+              />
             </div>
+            
+            <div className="pt-4 border-t border-slate-200 mt-4">
+              <label className="block text-sm font-medium text-slate-600 mb-1">Paso 2: Detalles del bloqueo ({newBlockDates.length} seleccionados)</label>
+              {newBlockDates.length === 0 && (
+                 <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200 mb-3">
+                   Debes seleccionar al menos un día en el calendario de arriba.
+                 </p>
+              )}
+            </div>
+            
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">Motivo (Opcional)</label>
               <input type="text" placeholder="Ej: Mantenimiento" value={newBlockReason} onChange={e => setNewBlockReason(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none text-sm" />
@@ -334,9 +363,10 @@ export default function AdminPage() {
             </div>
             <button 
               onClick={handleAddBlock}
-              className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-medium w-full transition"
+              disabled={newBlockDates.length === 0}
+              className="bg-slate-800 hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium w-full transition"
             >
-              Añadir Bloqueo
+              Añadir Bloqueo a {newBlockDates.length} días
             </button>
           </div>
 
@@ -370,29 +400,6 @@ export default function AdminPage() {
             </button>
           </div>
           
-          <h3 className="text-xl font-bold text-slate-700 mb-4 mt-8">Buscador y Borrador de Eventos</h3>
-          <AdminCalendar 
-            reservations={reservations} 
-            settings={settings} 
-            selectedDates={newBlockDates}
-            onToggleDate={(dateStr) => {
-              setNewBlockDates(prev => 
-                prev.includes(dateStr) 
-                  ? prev.filter(d => d !== dateStr) 
-                  : [...prev, dateStr]
-              );
-            }}
-            onDeleteReservation={handleDeleteRes} 
-            onDeleteBlock={handleRemoveBlock} 
-            onHideBaseEvent={async (dateStr) => {
-              const updatedSettings = {
-                ...settings,
-                hiddenBaseEvents: [...(settings.hiddenBaseEvents || []), dateStr]
-              };
-              setSettings(updatedSettings);
-              await store.saveSettings(updatedSettings);
-            }} 
-          />
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 print:hidden">
