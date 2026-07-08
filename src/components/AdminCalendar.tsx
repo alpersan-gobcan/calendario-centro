@@ -35,7 +35,9 @@ export default function AdminCalendar({
   settings, 
   onDeleteReservation, 
   onDeleteBlock, 
-  onHideBaseEvent 
+  onHideBaseEvent,
+  selectedDates,
+  onToggleDate
 }: { 
   reservations: Reservation[], 
   settings: Settings, 
