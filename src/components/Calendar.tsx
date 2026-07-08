@@ -287,8 +287,6 @@ export default function Calendar() {
               btnClasses += `${colorStyles[event.color]} font-bold shadow-sm hover:scale-105 border-transparent `;
             } else if (isStrictAdminBlock) {
               btnClasses += "bg-slate-700 text-slate-300 border-slate-800 cursor-not-allowed ";
-            } else if (adminBlocked && adminBlocked.type === "Días Restringidos") {
-              btnClasses += "bg-orange-500 text-white border-orange-600 font-bold shadow-sm hover:scale-105 ";
             } else if (isGroupReserved) {
               btnClasses += "bg-slate-700 text-white font-bold border-slate-800 opacity-90 hover:opacity-100 ";
             } else if (isWeekend) {

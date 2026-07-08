@@ -37,6 +37,7 @@ const colorStyles: Record<string, string> = {
   cyan: "bg-cyan-500 text-white hover:bg-cyan-600",
   indigo: "bg-indigo-400 text-white hover:bg-indigo-500",
   slate: "bg-slate-400 text-white hover:bg-slate-500",
+  orange: "bg-orange-500 text-white hover:bg-orange-600",
 };
 
 const textColors: Record<string, string> = {
@@ -48,6 +49,7 @@ const textColors: Record<string, string> = {
   cyan: "text-cyan-600",
   indigo: "text-indigo-500",
   slate: "text-slate-500",
+  orange: "text-orange-500",
 };
 
 const months = [
