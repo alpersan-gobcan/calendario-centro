@@ -83,6 +83,7 @@ export default function Calendar() {
   // Estado local
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
+  const [warningModal, setWarningModal] = useState<{dateStr: string, reason: string} | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -242,14 +243,15 @@ export default function Calendar() {
               return false;
             }) : false;
             
+            const hasAnyReservation = safeReservations.some(r => r.dateStr.split(',').includes(dateStr));
+            
             // Comprobar días bloqueados por admin
             const adminBlocked = settings.blockedDays?.find(b => b.dateStr === dateStr);
             const isStrictAdminBlock = adminBlocked && (
               adminBlocked.type === "Festivos y Vacaciones" || 
               adminBlocked.type?.toLowerCase().includes("festiv") ||
               adminBlocked.type?.toLowerCase().includes("vacacion") ||
-              adminBlocked.type?.toLowerCase().includes("libre") ||
-              (!adminBlocked.type && adminBlocked.reason === "Bloqueado por dirección")
+              adminBlocked.type?.toLowerCase().includes("libre")
             );
             
             // Comprobar antelación
@@ -260,7 +262,15 @@ export default function Calendar() {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             const tooClose = diffDays < settings.minDaysNotice;
             
-            const isBlocked = isWeekend || (event && event.blockReservation) || tooClose || isGroupReserved || selectedGroups.length === 0 || !!isStrictAdminBlock;
+            const isBlocked = isWeekend || (event && event.blockReservation) || tooClose || selectedGroups.length === 0 || !!isStrictAdminBlock;
+
+            let warningReason = "";
+            if (!isBlocked) {
+              if (adminBlocked) warningReason = `${adminBlocked.type}: ${adminBlocked.reason}`;
+              else if (hasAnyReservation) warningReason = "Ya existen grupos con reservas este día.";
+              else if (event) warningReason = event.title;
+            }
+            const isWarningDay = !!warningReason;
 
             let btnClasses = "relative aspect-square flex flex-col items-center justify-start p-[4%] font-medium rounded-md sm:rounded-xl transition-transform overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 border ";
             
@@ -283,7 +293,14 @@ export default function Calendar() {
             return (
               <button
                 key={day}
-                onClick={() => !isBlocked && handleDateClick(day)}
+                onClick={() => {
+                  if (isBlocked) return;
+                  if (isWarningDay && !isSelected) {
+                    setWarningModal({ dateStr, reason: warningReason });
+                  } else {
+                    handleDateClick(day);
+                  }
+                }}
                 disabled={isBlocked}
                 className={btnClasses}
                 style={{ containerType: 'inline-size' }}
@@ -428,6 +445,40 @@ export default function Calendar() {
           </button>
         </form>
       </div>
+
+      {warningModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 max-w-sm w-full animate-in zoom-in-95">
+            <h3 className="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2">
+              <span className="text-2xl">⚠️</span> Atención
+            </h3>
+            <p className="text-slate-600 mb-4 text-sm">
+              Este día ({warningModal.dateStr}) tiene la siguiente advertencia:
+              <br/><br/>
+              <strong className="text-slate-800">{warningModal.reason}</strong>
+              <br/><br/>
+              ¿Deseas continuar y seleccionarlo de todos modos?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => setWarningModal(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  handleDateClick(parseInt(warningModal.dateStr.split('-')[2]));
+                  setWarningModal(null);
+                }}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition shadow-sm"
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

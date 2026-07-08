@@ -41,7 +41,9 @@ export default function AdminCalendar({
   settings: Settings, 
   onDeleteReservation: (id: string) => void, 
   onDeleteBlock: (id: string) => void, 
-  onHideBaseEvent: (dateStr: string) => void 
+  onHideBaseEvent: (dateStr: string) => void,
+  selectedDates?: string[],
+  onToggleDate?: (dateStr: string) => void
 }) {
   const today = new Date();
   const currentMonthIdx = today.getMonth();
@@ -49,7 +51,7 @@ export default function AdminCalendar({
   const schoolYearStart = currentMonthIdx < 6 ? currentYearActual - 1 : currentYearActual;
 
   const [currentDate, setCurrentDate] = useState(new Date(schoolYearStart, 8, 1));
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [localSelectedDate, setLocalSelectedDate] = useState<string | null>(null);
 
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -78,7 +80,14 @@ export default function AdminCalendar({
 
   const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-  const selectedEvents = selectedDate ? getEventsForDay(selectedDate) : null;
+  const handleDateClick = (dateStr: string) => {
+    setLocalSelectedDate(dateStr);
+    if (onToggleDate) {
+      onToggleDate(dateStr);
+    }
+  };
+
+  const selectedEvents = localSelectedDate ? getEventsForDay(localSelectedDate) : null;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-fit">
@@ -111,18 +120,18 @@ export default function AdminCalendar({
             const day = i + 1;
             const dateStr = getFormatDateStr(currentYear, currentMonth, day);
             const events = getEventsForDay(dateStr);
-            const isSelected = selectedDate === dateStr;
+            const isSelected = selectedDates ? selectedDates.includes(dateStr) : localSelectedDate === dateStr;
             const isWeekend = (firstDayOfMonth + i) % 7 >= 5;
             
             let bgClass = "bg-slate-100 hover:bg-slate-200 text-slate-800 font-medium";
-            if (isSelected) bgClass = "bg-slate-800 text-white shadow-inner font-bold";
+            if (isSelected) bgClass = "bg-slate-800 text-white shadow-inner font-bold scale-105";
             else if (events.hasAny) bgClass = "bg-purple-200 text-purple-900 font-bold border-purple-300 shadow-sm";
             else if (isWeekend) bgClass = "bg-slate-50 text-slate-400";
             
             return (
               <button
                 key={day}
-                onClick={() => setSelectedDate(dateStr)}
+                onClick={() => handleDateClick(dateStr)}
                 className={`aspect-square flex items-center justify-center rounded-lg border border-slate-200 text-sm transition ${bgClass}`}
               >
                 {day}
@@ -132,9 +141,9 @@ export default function AdminCalendar({
         </div>
       </div>
 
-      {selectedDate && selectedEvents && selectedEvents.hasAny && (
+      {localSelectedDate && selectedEvents && selectedEvents.hasAny && (
         <div className="border-t border-slate-200 p-4 bg-slate-50 space-y-3">
-          <p className="font-bold text-slate-700 mb-2">{new Date(selectedDate).toLocaleDateString()}</p>
+          <p className="font-bold text-slate-700 mb-2">{new Date(localSelectedDate).toLocaleDateString()}</p>
           
           {selectedEvents.base && (
             <div className="flex justify-between items-center bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
@@ -145,7 +154,7 @@ export default function AdminCalendar({
               <button 
                 onClick={() => {
                   if(confirm("¿Ocultar evento base?")) {
-                    onHideBaseEvent(selectedDate);
+                    onHideBaseEvent(localSelectedDate);
                   }
                 }} 
                 className="text-red-500 hover:bg-red-50 px-2 py-1 rounded text-xs font-bold border border-red-200 transition shrink-0"

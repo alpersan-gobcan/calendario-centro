@@ -25,7 +25,7 @@ export default function AdminPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [] });
   
-  const [newBlockDate, setNewBlockDate] = useState("");
+  const [newBlockDates, setNewBlockDates] = useState<string[]>([]);
   const [newBlockReason, setNewBlockReason] = useState("");
   const [newBlockType, setNewBlockType] = useState("Festivos y Vacaciones");
   const [bulkImportText, setBulkImportText] = useState("");
@@ -57,19 +57,31 @@ export default function AdminPage() {
   };
 
   const handleAddBlock = async () => {
-    if (!newBlockDate) return;
+    if (newBlockDates.length === 0) {
+      alert("Por favor, selecciona al menos un día en el calendario de la derecha.");
+      return;
+    }
+    
+    const newBlocks = newBlockDates.map(dateStr => ({
+      dateStr,
+      reason: newBlockReason || "Bloqueado por dirección",
+      type: newBlockType,
+      id: Math.random().toString(36).substr(2, 9)
+    }));
+
     const updatedSettings = {
       ...settings,
       blockedDays: [
         ...(settings.blockedDays || []),
-        { dateStr: newBlockDate, reason: newBlockReason || "Bloqueado por dirección", type: newBlockType, id: Math.random().toString(36).substr(2, 9) }
+        ...newBlocks
       ]
     };
+    
     setSettings(updatedSettings);
     await store.saveSettings(updatedSettings);
-    setNewBlockDate("");
+    setNewBlockDates([]);
     setNewBlockReason("");
-    alert("Día bloqueado y añadido correctamente al calendario.");
+    alert(`Se han añadido ${newBlocks.length} días bloqueados correctamente al calendario.`);
   };
 
   const handleBulkImport = async () => {
@@ -298,8 +310,10 @@ export default function AdminPage() {
           <h3 className="text-xl font-bold text-slate-700 mb-4">Bloquear Fechas</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Día a bloquear</label>
-              <input type="date" value={newBlockDate} onChange={e => setNewBlockDate(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none" />
+              <label className="block text-sm font-medium text-slate-600 mb-1">Días a bloquear ({newBlockDates.length} seleccionados)</label>
+              <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                Selecciona uno o varios días haciendo clic en el "Buscador y Borrador de Eventos" (calendario de la derecha o inferior).
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">Motivo (Opcional)</label>
@@ -314,6 +328,7 @@ export default function AdminPage() {
                 <option value="Visita de Familias">Visita de Familias</option>
                 <option value="Sesiones de evaluación">Sesiones de evaluación</option>
                 <option value="Entrega de Boletines">Entrega de Boletines</option>
+                <option value="Días Restringidos">Días Restringidos</option>
                 <option value="Días relevantes">Días relevantes</option>
               </select>
             </div>
@@ -359,6 +374,14 @@ export default function AdminPage() {
           <AdminCalendar 
             reservations={reservations} 
             settings={settings} 
+            selectedDates={newBlockDates}
+            onToggleDate={(dateStr) => {
+              setNewBlockDates(prev => 
+                prev.includes(dateStr) 
+                  ? prev.filter(d => d !== dateStr) 
+                  : [...prev, dateStr]
+              );
+            }}
             onDeleteReservation={handleDeleteRes} 
             onDeleteBlock={handleRemoveBlock} 
             onHideBaseEvent={async (dateStr) => {
