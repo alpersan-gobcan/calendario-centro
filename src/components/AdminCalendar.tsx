@@ -207,7 +207,7 @@ export default function AdminCalendar({
         </div>
       )}
       
-      {selectedDate && selectedEvents && !selectedEvents.hasAny && (
+      {localSelectedDate && selectedEvents && !selectedEvents.hasAny && (
          <div className="border-t border-slate-200 p-4 bg-slate-50 text-center">
             <p className="text-sm text-slate-500">Sin eventos este día.</p>
          </div>
