@@ -153,12 +153,16 @@ export default function YearlyCalendar() {
                   {modalEvent.dayEvents.map((evt, idx) => (
                     <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                       <h3 className="font-bold text-lg text-slate-800 mb-2 border-b pb-2">{evt.title.replace('\n', ' ')}</h3>
-                      <div className="whitespace-pre-wrap text-slate-700">{evt.details}</div>
+                      {evt.type === "salida" && (
+                        <div className="whitespace-pre-wrap text-slate-700">{evt.details}</div>
+                      )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="whitespace-pre-wrap text-slate-700">{modalEvent.details}</div>
+                modalEvent.title !== modalEvent.details && (
+                  <div className="whitespace-pre-wrap text-slate-700">{modalEvent.details}</div>
+                )
               )}
             </div>
             <button 
@@ -447,7 +451,9 @@ export default function YearlyCalendar() {
                           <p className="font-bold text-lg lg:text-xl text-slate-800">
                             {evt.startDay === evt.endDay ? evt.startDay : `${evt.startDay} al ${evt.endDay}`} - {evt.title.replace('\n', ' ')}
                           </p>
-                          <p className="text-sm lg:text-base text-slate-600 mt-2 whitespace-pre-wrap">{evt.details}</p>
+                          {evt.type === "salida" && (
+                            <p className="text-sm lg:text-base text-slate-600 mt-2 whitespace-pre-wrap">{evt.details}</p>
+                          )}
                         </div>
                       </div>
                     ))
