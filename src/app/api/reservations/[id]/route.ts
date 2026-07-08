@@ -20,9 +20,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params;
   const body = await request.json();
   
+  // Clean up body to not update id
+  const { id: _id, ...updateData } = body;
+  
   const { error } = await supabase
     .from('reservations')
-    .update({ status: body.status })
+    .update(updateData)
     .eq('id', id);
 
   if (error) {

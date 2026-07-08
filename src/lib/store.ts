@@ -78,6 +78,18 @@ export const store = {
     }
   },
 
+  updateReservationData: async (id: string, data: Partial<Reservation>): Promise<void> => {
+    const res = await fetch(`/api/reservations/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Error al actualizar la reserva");
+    }
+  },
+
   getSettings: async (): Promise<Settings> => {
     const defaultSettings = { minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] };
     try {

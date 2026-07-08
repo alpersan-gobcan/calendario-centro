@@ -33,6 +33,25 @@ export default function AdminPage() {
   const [printStartDate, setPrintStartDate] = useState("");
   const [printEndDate, setPrintEndDate] = useState("");
 
+  const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Reservation>>({});
+
+  const handleEditClick = (r: Reservation) => {
+    setEditingReservation(r);
+    setEditForm(r);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingReservation) return;
+    try {
+      await store.updateReservationData(editingReservation.id, editForm);
+      setReservations(prev => prev.map(r => r.id === editingReservation.id ? { ...r, ...editForm } as Reservation : r));
+      setEditingReservation(null);
+    } catch (e) {
+      alert("Error al actualizar la reserva");
+    }
+  };
+
   useEffect(() => {
     if (isLogged) {
       store.getReservations().then(setReservations);
@@ -483,6 +502,12 @@ export default function AdminPage() {
                       </button>
                     )}
                     <button 
+                      onClick={() => handleEditClick(r)}
+                      className="flex-1 text-blue-600 hover:text-blue-800 text-sm font-bold bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg border border-blue-200 shadow-sm transition"
+                    >
+                      Editar
+                    </button>
+                    <button 
                       onClick={() => handleDeleteRes(r.id)}
                       className="flex-1 text-red-500 hover:text-red-700 text-sm font-bold bg-white hover:bg-red-50 px-3 py-2 rounded-lg border border-red-200 shadow-sm transition"
                     >
@@ -549,7 +574,130 @@ export default function AdminPage() {
           </div>
         </div>
 
+        </div>
+
       </div>
+
+      {editingReservation && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 flex flex-col max-h-[90vh]">
+            <h2 className="text-2xl font-bold text-slate-800 mb-4 border-b pb-2">Editar Reserva</h2>
+            <div className="overflow-y-auto pr-2 space-y-4 flex-grow">
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Actividad</label>
+                <input 
+                  type="text" 
+                  value={editForm.activity || ""} 
+                  onChange={e => setEditForm(prev => ({ ...prev, activity: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Grupo(s)</label>
+                <input 
+                  type="text" 
+                  value={editForm.group || ""} 
+                  onChange={e => setEditForm(prev => ({ ...prev, group: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Alumnos</label>
+                  <input 
+                    type="number" 
+                    value={editForm.studentsCount || 0} 
+                    onChange={e => setEditForm(prev => ({ ...prev, studentsCount: Number(e.target.value) }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Llegada al centro</label>
+                  <input 
+                    type="time" 
+                    value={editForm.arrivalTime || ""} 
+                    onChange={e => setEditForm(prev => ({ ...prev, arrivalTime: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Docentes Acompañantes</label>
+                <input 
+                  type="text" 
+                  value={editForm.otherTeachers || ""} 
+                  onChange={e => setEditForm(prev => ({ ...prev, otherTeachers: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
+                <label className="flex items-center gap-2 font-medium text-blue-900 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={editForm.needsTransport || false}
+                    onChange={e => setEditForm(prev => ({ ...prev, needsTransport: e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 rounded"
+                  />
+                  ¿Necesita Guagua?
+                </label>
+                {editForm.needsTransport && (
+                  <div className="grid grid-cols-2 gap-4 mt-2 pl-6">
+                    <div>
+                      <label className="block text-sm font-medium text-blue-800 mb-1">Hora Salida</label>
+                      <input 
+                        type="time" 
+                        value={editForm.transportDepartureTime || ""} 
+                        onChange={e => setEditForm(prev => ({ ...prev, transportDepartureTime: e.target.value }))}
+                        className="w-full px-3 py-2 border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-blue-800 mb-1">Hora Recogida</label>
+                      <input 
+                        type="time" 
+                        value={editForm.transportReturnTime || ""} 
+                        onChange={e => setEditForm(prev => ({ ...prev, transportReturnTime: e.target.value }))}
+                        className="w-full px-3 py-2 border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" 
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Notas / Observaciones</label>
+                <textarea 
+                  value={editForm.notes || ""} 
+                  onChange={e => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none" 
+                />
+              </div>
+
+            </div>
+            
+            <div className="mt-6 flex gap-3 pt-4 border-t border-slate-100">
+              <button 
+                onClick={() => setEditingReservation(null)}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-4 rounded-xl transition"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleSaveEdit}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-md"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
