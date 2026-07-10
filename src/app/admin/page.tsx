@@ -641,10 +641,10 @@ export default function AdminPage() {
           })()}
         </div>
         
-        {/* Módulo de Reportes PDF */}
+        {/* Módulo de Reportes PNG */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-3 print:hidden">
-          <h2 className="text-2xl font-bold text-slate-800 mb-6">Generar Informe (PDF)</h2>
-          <p className="text-sm text-slate-600 mb-4">Selecciona un rango de fechas para generar un documento listo para imprimir o guardar como PDF con todas las actividades programadas en ese periodo.</p>
+          <h2 className="text-2xl font-bold text-slate-800 mb-6">Generar Informe (PNG)</h2>
+          <p className="text-sm text-slate-600 mb-4">Selecciona un rango de fechas para generar un documento listo para descargar como PNG con todas las actividades programadas en ese periodo.</p>
           
           <div className="flex flex-col sm:flex-row gap-4 items-end">
             <div className="flex-1">
@@ -660,7 +660,7 @@ export default function AdminPage() {
               disabled={!printStartDate || !printEndDate}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm disabled:opacity-50 transition h-[42px] whitespace-nowrap"
             >
-              Imprimir (PDF)
+              Exportar (PNG)
             </button>
             <button 
               onClick={handleSendReport}

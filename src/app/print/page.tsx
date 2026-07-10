@@ -3,7 +3,6 @@
 import { useEffect, useState, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { store, Reservation, Settings } from "@/lib/store";
-import html2canvas from "html2canvas";
 
 const specialEvents: Record<string, { title: string, details: string, blockReservation?: boolean, color: string }> = {
   "2026-09-08": { title: "Día del Pino", details: "Festivo Día del Pino.", blockReservation: true, color: "rose" },
@@ -80,6 +79,7 @@ function PrintContent() {
     if (!calendarRef.current) return;
     setIsExporting(true);
     try {
+      const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(calendarRef.current, {
         scale: 2,
         backgroundColor: "#ffffff",
@@ -89,9 +89,9 @@ function PrintContent() {
       link.download = `Calendario_${startParam}_al_${endParam}.png`;
       link.href = dataUrl;
       link.click();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al exportar PNG:", error);
-      alert("Hubo un error al generar la imagen.");
+      alert("Hubo un error al generar la imagen: " + (error.message || error.toString()));
     } finally {
       setIsExporting(false);
     }
