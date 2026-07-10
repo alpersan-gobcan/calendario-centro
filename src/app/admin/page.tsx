@@ -21,6 +21,15 @@ const ALL_GROUPS = [
 export default function AdminPage() {
   const [isLogged, setIsLogged] = useState(false);
   const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    const authExpires = localStorage.getItem('adminAuthExpires');
+    if (authExpires && parseInt(authExpires) > Date.now()) {
+      setIsLogged(true);
+    } else {
+      localStorage.removeItem('adminAuthExpires');
+    }
+  }, []);
   
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [] });
@@ -114,6 +123,7 @@ export default function AdminPage() {
     if (password === (serverSettings.adminPassword || "admin123") || password === "26Koleos3772") {
       setSettings(serverSettings);
       setIsLogged(true);
+      localStorage.setItem('adminAuthExpires', (Date.now() + 15 * 60 * 1000).toString());
     } else {
       alert("Contraseña incorrecta");
     }
