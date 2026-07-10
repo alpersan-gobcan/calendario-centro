@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { store, Reservation, Settings } from "@/lib/store";
+import html2canvas from "html2canvas";
 
 const specialEvents: Record<string, { title: string, details: string, blockReservation?: boolean, color: string }> = {
   "2026-09-08": { title: "Día del Pino", details: "Festivo Día del Pino.", blockReservation: true, color: "rose" },
@@ -36,6 +37,8 @@ function PrintContent() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
   const [calendarDays, setCalendarDays] = useState<{date: Date, isCurrentRange: boolean}[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
+  const calendarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     Promise.all([
@@ -71,28 +74,55 @@ function PrintContent() {
       }
       setCalendarDays(days);
     }
-    
-    const t = setTimeout(() => {
-      window.print();
-    }, 1200);
-    return () => clearTimeout(t);
   }, [startParam, endParam]);
+
+  const handleExportPNG = async () => {
+    if (!calendarRef.current) return;
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(calendarRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+      });
+      const dataUrl = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = `Calendario_${startParam}_al_${endParam}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error("Error al exportar PNG:", error);
+      alert("Hubo un error al generar la imagen.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (!startParam || !endParam) return <div className="p-8">Faltan parámetros de fecha.</div>;
 
   const dayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
   return (
-    <div className="bg-white text-black min-h-screen p-8 print:p-0 font-sans">
-      <div className="text-center mb-6">
-        <h1 className="text-4xl font-extrabold uppercase tracking-widest text-slate-900">Calendario de Actividades</h1>
-        <p className="text-xl text-slate-600 font-semibold mt-2">
-          {new Date(startParam).toLocaleDateString()} - {new Date(endParam).toLocaleDateString()}
-        </p>
+    <div className="bg-slate-100 min-h-screen p-4 sm:p-8 font-sans flex flex-col items-center">
+      <div className="mb-6 flex gap-4 print:hidden">
+        <button 
+          onClick={handleExportPNG}
+          disabled={isExporting}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition disabled:opacity-50"
+        >
+          {isExporting ? "Generando PNG..." : "⬇️ Descargar como PNG"}
+        </button>
       </div>
 
-      <div className="w-full border-t-[3px] border-l-[3px] border-slate-800 bg-slate-800 gap-[2px] grid grid-cols-1">
-        <div className="grid grid-cols-7 bg-white">
+      <div ref={calendarRef} className="bg-white p-6 sm:p-10 w-full max-w-7xl shadow-xl rounded-xl">
+        <div className="text-center mb-6">
+          <h1 className="text-4xl font-extrabold uppercase tracking-widest text-slate-900">Calendario de Actividades</h1>
+          <p className="text-xl text-slate-600 font-semibold mt-2">
+            {new Date(startParam).toLocaleDateString()} - {new Date(endParam).toLocaleDateString()}
+          </p>
+        </div>
+
+        <div className="w-full border-t-[3px] border-l-[3px] border-slate-800 bg-slate-800 gap-[2px] grid grid-cols-1">
+          <div className="grid grid-cols-7 bg-white">
           {dayNames.map(d => (
             <div key={d} className="border-r-[3px] border-b-[3px] border-slate-800 p-2 text-center font-bold text-slate-900 text-sm uppercase bg-slate-100 print:bg-slate-200">
               {d}
@@ -133,7 +163,7 @@ function PrintContent() {
                   {dayReservations.map(r => {
                     const isConfirmed = r.status === "confirmed";
                     const bgColor = isConfirmed ? "bg-cyan-50" : "bg-slate-50";
-                    const borderColor = isConfirmed ? "border-cyan-400 print:border-cyan-600" : "border-slate-300 print:border-slate-400";
+                    const borderColor = isConfirmed ? "border-cyan-400" : "border-slate-300";
                     const titleColor = isConfirmed ? "text-cyan-900" : "text-slate-800";
                     const subColor = isConfirmed ? "text-cyan-800" : "text-slate-700";
                     
@@ -157,6 +187,7 @@ function PrintContent() {
           })}
         </div>
       </div>
+    </div>
     </div>
   );
 }
