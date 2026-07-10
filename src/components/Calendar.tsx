@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { store, Reservation, Settings } from "@/lib/store";
 
 const ALL_GROUPS = [
-  "1º ESO A", "1º ESO B", "1º ESO C", "1º ESO D",
-  "2º ESO A", "2º ESO B", "2º ESO C", "2º ESO D",
-  "3º ESO A", "3º ESO B", "3º ESO C",
-  "4º ESO A", "4º ESO B", "4º ESO C",
+  "1º ESO A", "1º ESO B", "1º ESO C", "1º ESO D", "1º ESO E",
+  "2º ESO A", "2º ESO B", "2º ESO C", "2º ESO D", "2º ESO E",
+  "3º ESO A", "3º ESO B", "3º ESO C", "3º ESO D", "3º ESO E",
+  "4º ESO A", "4º ESO B", "4º ESO C", "4º ESO D", "4º ESO E",
   "1º PDC", "2º PDC",
   "1º BACH A", "1º BACH B", "1º BACH C",
   "2º BACH A", "2º BACH B", "2º BACH C",

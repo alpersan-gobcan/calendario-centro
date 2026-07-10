@@ -40,6 +40,12 @@ export async function POST(request: Request) {
       }).join(', ');
     };
 
+    const now = new Date();
+    const currentDay = now.getDate().toString();
+    const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const currentMonth = months[now.getMonth()];
+    const currentYear = now.getFullYear().toString();
+
     const replacements: Record<string, string> = {
       '{{ACTIVIDAD}}': data.activity || '',
       '{{FECHA}}': formatDate(data.dateStr),
@@ -53,7 +59,10 @@ export async function POST(request: Request) {
       '{{DESCRIPCION}}': data.description || '',
       '{{TIPO_ACTIVIDAD}}': data.authType || '',
       '{{OBSERVACIONES}}': data.notes || '',
-      '{{LAST_DAY}}': formatDate(data.lastDay)
+      '{{LAST_DAY}}': formatDate(data.lastDay),
+      '{{DIA}}': currentDay,
+      '{{MES}}': currentMonth,
+      '{{AÑO}}': currentYear
     };
 
     // Helper to escape XML special characters
