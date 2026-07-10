@@ -152,10 +152,16 @@ export default function Calendar() {
           }
           
           const safeReservations = Array.isArray(reservations) ? reservations.filter(r => r.status !== 'rejected') : [];
-          const resForDay = safeReservations.filter(r => r.dateStr.split(',').includes(dStr));
+          const resForDay = safeReservations.filter(r => {
+            if (r.dateStr.split(',').includes(dStr)) {
+              const rGroups = r.group.split(', ');
+              return selectedGroups.some(g => rGroups.includes(g));
+            }
+            return false;
+          });
           if (resForDay.length > 0) {
             const groupNames = resForDay.map(r => r.group).join(", ");
-            warningsList.push(`${dStr}: Ya hay reservas previas (${groupNames})`);
+            warningsList.push(`${dStr}: Ya hay reservas previas para grupos seleccionados (${groupNames})`);
           }
         });
         const warnings = warningsList.length > 0 ? Array.from(new Set(warningsList)).join(" | ") : undefined;
@@ -277,7 +283,7 @@ export default function Calendar() {
             let warningReason = "";
             if (!isBlocked) {
               if (adminBlocked) warningReason = `${adminBlocked.type}: ${adminBlocked.reason}`;
-              else if (hasAnyReservation) warningReason = "Ya existen grupos con reservas este día.";
+              else if (isGroupReserved) warningReason = "Ya existen grupos seleccionados con reservas este día.";
               else if (event) warningReason = event.title;
             }
             const isWarningDay = !!warningReason;

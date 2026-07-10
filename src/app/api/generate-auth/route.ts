@@ -28,9 +28,21 @@ export async function POST(request: Request) {
     // Prepare replacements
     // Note: LibreOffice sometimes splits tags with XML elements if they were formatted partially.
     // Assuming the user pasted them exactly as text without inner formatting.
+    // Helper to format dates from YYYY-MM-DD to DD-MM-YYYY
+    const formatDate = (dateString: string) => {
+      if (!dateString) return '';
+      return dateString.split(',').map(d => {
+        const parts = d.trim().split('-');
+        if (parts.length === 3) {
+          return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        return d.trim();
+      }).join(', ');
+    };
+
     const replacements: Record<string, string> = {
       '{{ACTIVIDAD}}': data.activity || '',
-      '{{FECHA}}': data.dateStr || '',
+      '{{FECHA}}': formatDate(data.dateStr),
       '{{LUGAR}}': data.location || '',
       '{{HORA_SALIDA}}': data.transportDepartureTime || '',
       '{{HORA_LLEGADA}}': data.arrivalTime || '',
@@ -41,7 +53,7 @@ export async function POST(request: Request) {
       '{{DESCRIPCION}}': data.description || '',
       '{{TIPO_ACTIVIDAD}}': data.authType || '',
       '{{OBSERVACIONES}}': data.notes || '',
-      '{{LAST_DAY}}': data.lastDay || ''
+      '{{LAST_DAY}}': formatDate(data.lastDay)
     };
 
     // Helper to escape XML special characters
