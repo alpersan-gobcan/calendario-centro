@@ -85,6 +85,9 @@ export default function AdminPage() {
   };
 
   const handleGenerateAuth = async () => {
+    if (!window.confirm("⚠️ IMPORTANTE: ¿Estás seguro/a de que has sumado el importe del transporte al coste total de la actividad (si fuera necesario)?")) {
+      return;
+    }
     setIsGeneratingAuth(true);
     try {
       const res = await fetch('/api/generate-auth', {
@@ -915,7 +918,9 @@ export default function AdminPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Coste</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Coste <span className="text-red-600 font-bold ml-1 text-xs">(OJO: sumar coste transporte si es necesario)</span>
+                  </label>
                   <input 
                     type="text" 
                     value={authForm.cost} 

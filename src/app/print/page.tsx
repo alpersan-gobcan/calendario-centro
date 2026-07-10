@@ -79,12 +79,11 @@ function PrintContent() {
     if (!calendarRef.current) return;
     setIsExporting(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(calendarRef.current, {
-        scale: 2,
+      const htmlToImage = await import("html-to-image");
+      const dataUrl = await htmlToImage.toPng(calendarRef.current, {
         backgroundColor: "#ffffff",
+        pixelRatio: 2
       });
-      const dataUrl = canvas.toDataURL("image/png");
       const link = document.createElement("a");
       link.download = `Calendario_${startParam}_al_${endParam}.png`;
       link.href = dataUrl;
