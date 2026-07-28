@@ -73,11 +73,10 @@ export async function GET(request: Request) {
       const dateStr = `${current.getFullYear()}-${(current.getMonth() + 1).toString().padStart(2, '0')}-${current.getDate().toString().padStart(2, '0')}`;
       
       const dayRes = safeReservations.filter((r: any) => r.dateStr && r.dateStr.includes(dateStr) && r.status !== 'rejected');
-      const dayBlocks = safeBlockedDays.filter((b: any) => b.dateStr === dateStr);
       const isBaseHidden = hiddenBaseEvents.includes(dateStr);
       const baseEvent = !isBaseHidden ? specialEvents[dateStr] : null;
 
-      if (dayRes.length > 0 || dayBlocks.length > 0 || baseEvent) {
+      if (dayRes.length > 0 || baseEvent) {
         hasEvents = true;
         
         emailHtml += `<div style="margin-bottom: 24px;">
@@ -87,13 +86,6 @@ export async function GET(request: Request) {
           emailHtml += `<div style="background-color: #f1f5f9; padding: 10px 15px; border-left: 4px solid #94a3b8; margin-bottom: 8px;">
             <p style="margin: 0; font-weight: bold; color: #334155;">${baseEvent.title}</p>
             <p style="margin: 4px 0 0 0; color: #475569; font-size: 14px;">${baseEvent.details}</p>
-          </div>`;
-        }
-
-        for (const block of dayBlocks) {
-          emailHtml += `<div style="background-color: #fff1f2; padding: 10px 15px; border-left: 4px solid #fb7185; margin-bottom: 8px;">
-            <p style="margin: 0; font-weight: bold; color: #9f1239;">${block.type || "Bloqueado"}</p>
-            <p style="margin: 4px 0 0 0; color: #be123c; font-size: 14px;">${block.reason}</p>
           </div>`;
         }
 

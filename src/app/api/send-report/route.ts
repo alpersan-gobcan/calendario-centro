@@ -30,11 +30,17 @@ const specialEvents: Record<string, { title: string, details: string, blockReser
 
 export async function POST(request: Request) {
   try {
-    const { start, end } = await request.json();
+    const { start, end, cats } = await request.json();
 
     if (!start || !end) {
       return NextResponse.json({ error: "Fechas de inicio y fin requeridas." }, { status: 400 });
     }
+    
+    const allowedCats = cats || ['res', 'eph', 'hol', 'blk'];
+    const showRes = allowedCats.includes('res');
+    const showEph = allowedCats.includes('eph');
+    const showHol = allowedCats.includes('hol');
+    const showBlk = allowedCats.includes('blk');
 
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -64,10 +70,15 @@ export async function POST(request: Request) {
     while (current <= endDate) {
       const dateStr = `${current.getFullYear()}-${(current.getMonth() + 1).toString().padStart(2, '0')}-${current.getDate().toString().padStart(2, '0')}`;
       
-      const dayRes = safeReservations.filter((r: any) => r.dateStr.includes(dateStr) && r.status !== 'rejected');
-      const dayBlocks = safeBlockedDays.filter((b: any) => b.dateStr === dateStr);
+      const dayRes = showRes ? safeReservations.filter((r: any) => r.dateStr.includes(dateStr) && r.status !== 'rejected') : [];
+      const dayBlocks = showBlk ? safeBlockedDays.filter((b: any) => b.dateStr === dateStr) : [];
+      
       const isBaseHidden = hiddenBaseEvents.includes(dateStr);
-      const baseEvent = !isBaseHidden ? specialEvents[dateStr] : null;
+      const baseEventRaw = !isBaseHidden ? specialEvents[dateStr] : null;
+      
+      const isHoliday = baseEventRaw?.blockReservation === true;
+      const showBaseEvent = baseEventRaw && (isHoliday ? showHol : showEph);
+      const baseEvent = showBaseEvent ? baseEventRaw : null;
 
       if (dayRes.length > 0 || dayBlocks.length > 0 || baseEvent) {
         hasEvents = true;

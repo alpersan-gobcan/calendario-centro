@@ -30,8 +30,15 @@ const specialEvents: Record<string, { title: string, details: string, blockReser
 
 function PrintContent() {
   const searchParams = useSearchParams();
-  const startParam = searchParams.get("start");
-  const endParam = searchParams.get("end");
+  const startParam = searchParams?.get('start');
+  const endParam = searchParams?.get('end');
+  const catsParam = searchParams?.get('cats');
+  const allowedCats = catsParam ? catsParam.split(',') : ['res', 'eph', 'hol', 'blk'];
+  
+  const showRes = allowedCats.includes('res');
+  const showEph = allowedCats.includes('eph');
+  const showHol = allowedCats.includes('hol');
+  const showBlk = allowedCats.includes('blk');
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
@@ -150,10 +157,14 @@ function PrintContent() {
         <div className="grid grid-cols-7 bg-white">
           {calendarDays.map((d, i) => {
             const dateStr = `${d.date.getFullYear()}-${(d.date.getMonth()+1).toString().padStart(2,'0')}-${d.date.getDate().toString().padStart(2,'0')}`;
-            const dayReservations = (Array.isArray(reservations) ? reservations : []).filter(r => r.status !== 'rejected' && r.dateStr.split(',').includes(dateStr));
-            const dayBlocks = (settings.blockedDays || []).filter(b => b.dateStr === dateStr);
+            const dayReservations = showRes ? (Array.isArray(reservations) ? reservations : []).filter(r => r.status !== 'rejected' && r.dateStr.split(',').includes(dateStr)) : [];
+            const dayBlocks = showBlk ? (settings.blockedDays || []).filter(b => b.dateStr === dateStr) : [];
             const isBaseHidden = settings.hiddenBaseEvents?.includes(dateStr);
-            const baseEvent = !isBaseHidden ? specialEvents[dateStr] : null;
+            const baseEventRaw = !isBaseHidden ? specialEvents[dateStr] : null;
+            
+            const isHoliday = baseEventRaw?.blockReservation === true;
+            const showBaseEvent = baseEventRaw && (isHoliday ? showHol : showEph);
+            const baseEvent = showBaseEvent ? baseEventRaw : null;
             
             return (
               <div key={i} className={`border-r-[3px] border-b-[3px] border-slate-800 min-h-[160px] p-2 flex flex-col ${d.isCurrentRange ? 'bg-white' : 'bg-slate-100 opacity-60'}`}>

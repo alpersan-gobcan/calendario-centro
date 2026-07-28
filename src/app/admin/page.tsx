@@ -216,15 +216,24 @@ export default function AdminPage() {
   };
 
   const [isSendingReport, setIsSendingReport] = useState(false);
-
+  const [filterRes, setFilterRes] = useState(true);
+  const [filterEph, setFilterEph] = useState(true);
+  const [filterHol, setFilterHol] = useState(true);
+  const [filterBlk, setFilterBlk] = useState(true);
   const handleSendReport = async () => {
     if (!printStartDate || !printEndDate) return;
     setIsSendingReport(true);
     try {
+      const cats = [];
+      if (filterRes) cats.push('res');
+      if (filterEph) cats.push('eph');
+      if (filterHol) cats.push('hol');
+      if (filterBlk) cats.push('blk');
+
       const res = await fetch('/api/send-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ start: printStartDate, end: printEndDate })
+        body: JSON.stringify({ start: printStartDate, end: printEndDate, cats })
       });
       const data = await res.json();
       if (data.success) {
@@ -652,6 +661,25 @@ export default function AdminPage() {
           <h2 className="text-2xl font-bold text-slate-800 mb-6">Generar Informe</h2>
           <p className="text-sm text-slate-600 mb-4">Selecciona un rango de fechas para generar un documento listo para descargar (PNG o PDF) con todas las actividades programadas en ese periodo.</p>
           
+          <div className="flex flex-wrap gap-4 mb-6">
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={filterRes} onChange={e => setFilterRes(e.target.checked)} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              Actividades y Salidas
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={filterEph} onChange={e => setFilterEph(e.target.checked)} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              Efemérides y Días Relevantes
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={filterHol} onChange={e => setFilterHol(e.target.checked)} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              Festivos y Vacaciones
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={filterBlk} onChange={e => setFilterBlk(e.target.checked)} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              Días Bloqueados (Administrador)
+            </label>
+          </div>
+          
           <div className="flex flex-col sm:flex-row gap-4 items-end">
             <div className="flex-1">
               <label className="block text-sm font-medium text-slate-700 mb-1">Desde</label>
@@ -661,17 +689,39 @@ export default function AdminPage() {
               <label className="block text-sm font-medium text-slate-700 mb-1">Hasta</label>
               <input type="date" value={printEndDate} onChange={e => setPrintEndDate(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none" />
             </div>
-            <button 
-              onClick={() => window.open(`/print?start=${printStartDate}&end=${printEndDate}`, '_blank')}
-              disabled={!printStartDate || !printEndDate}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm disabled:opacity-50 transition h-[42px] whitespace-nowrap"
-            >
-              Descarga
-            </button>
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={() => {
+                  const cats = [];
+                  if (filterRes) cats.push('res');
+                  if (filterEph) cats.push('eph');
+                  if (filterHol) cats.push('hol');
+                  if (filterBlk) cats.push('blk');
+                  window.open(`/print?start=${printStartDate}&end=${printEndDate}&cats=${cats.join(',')}`, '_blank');
+                }}
+                disabled={!printStartDate || !printEndDate}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm disabled:opacity-50 transition h-[42px] whitespace-nowrap text-sm"
+              >
+                Descarga PDF / PNG
+              </button>
+              <button 
+                onClick={() => {
+                  const cats = [];
+                  if (filterRes) cats.push('res');
+                  if (filterEph) cats.push('eph');
+                  if (filterHol) cats.push('hol');
+                  if (filterBlk) cats.push('blk');
+                  window.open(`/print-yearly?cats=${cats.join(',')}`, '_blank');
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition h-[42px] whitespace-nowrap text-sm"
+              >
+                📅 Exportar Curso Completo
+              </button>
+            </div>
             <button 
               onClick={handleSendReport}
               disabled={!printStartDate || !printEndDate || isSendingReport}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm disabled:opacity-50 transition h-[42px] flex items-center justify-center whitespace-nowrap"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm disabled:opacity-50 transition h-[42px] flex items-center justify-center whitespace-nowrap text-sm"
             >
               {isSendingReport ? "Enviando..." : "📧 Enviar al Vicedirector"}
             </button>
