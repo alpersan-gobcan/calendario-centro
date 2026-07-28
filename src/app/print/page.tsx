@@ -98,6 +98,18 @@ function PrintContent() {
 
   if (!startParam || !endParam) return <div className="p-8">Faltan parámetros de fecha.</div>;
 
+  const formatDateTitle = (start: string, end: string) => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const monthNames = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+    
+    const startStr = `${startDate.getDate().toString().padStart(2, '0')}/${(startDate.getMonth()+1).toString().padStart(2, '0')}/${startDate.getFullYear()}`;
+    const endStr = `${endDate.getDate().toString().padStart(2, '0')}/${(endDate.getMonth()+1).toString().padStart(2, '0')}/${endDate.getFullYear()}`;
+    
+    const monthName = monthNames[startDate.getMonth()];
+    return `${monthName} ${startStr} - ${endStr}`;
+  };
+
   const dayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
   return (
@@ -110,13 +122,19 @@ function PrintContent() {
         >
           {isExporting ? "Generando PNG..." : "⬇️ Descargar como PNG"}
         </button>
+        <button 
+          onClick={() => window.print()}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition"
+        >
+          📄 Descargar como PDF
+        </button>
       </div>
 
       <div ref={calendarRef} className="bg-white p-6 sm:p-10 w-full max-w-7xl shadow-xl rounded-xl">
         <div className="text-center mb-6">
           <h1 className="text-4xl font-extrabold uppercase tracking-widest text-slate-900">Calendario de Actividades</h1>
-          <p className="text-xl text-slate-600 font-semibold mt-2">
-            {new Date(startParam).toLocaleDateString()} - {new Date(endParam).toLocaleDateString()}
+          <p className="text-xl text-slate-600 font-semibold mt-2 uppercase">
+            {formatDateTitle(startParam, endParam)}
           </p>
         </div>
 
