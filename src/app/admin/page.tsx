@@ -57,8 +57,11 @@ export default function AdminPage() {
   const handleSaveEdit = async () => {
     if (!editingReservation) return;
     try {
-      await store.updateReservationData(editingReservation.id, editForm);
-      setReservations(prev => prev.map(r => r.id === editingReservation.id ? { ...r, ...editForm } as Reservation : r));
+      const isRejected = editingReservation.status === 'rejected';
+      const updatedForm = isRejected ? { ...editForm, status: 'confirmed' as const } : editForm;
+      
+      await store.updateReservationData(editingReservation.id, updatedForm);
+      setReservations(prev => prev.map(r => r.id === editingReservation.id ? { ...r, ...updatedForm } as Reservation : r));
       setEditingReservation(null);
     } catch (e) {
       alert("Error al actualizar la reserva");
