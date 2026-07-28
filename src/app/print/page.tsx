@@ -33,12 +33,9 @@ function PrintContent() {
   const startParam = searchParams?.get('start');
   const endParam = searchParams?.get('end');
   const catsParam = searchParams?.get('cats');
-  const allowedCats = catsParam ? catsParam.split(',') : ['res', 'eph', 'hol', 'blk'];
+  const allowedCats = catsParam ? catsParam.split(',') : ['holidays', 'ephemeris', 'outings', 'family', 'eval', 'grades', 'relevant'];
   
-  const showRes = allowedCats.includes('res');
-  const showEph = allowedCats.includes('eph');
-  const showHol = allowedCats.includes('hol');
-  const showBlk = allowedCats.includes('blk');
+  const showRes = allowedCats.includes('outings');
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
@@ -158,13 +155,32 @@ function PrintContent() {
           {calendarDays.map((d, i) => {
             const dateStr = `${d.date.getFullYear()}-${(d.date.getMonth()+1).toString().padStart(2,'0')}-${d.date.getDate().toString().padStart(2,'0')}`;
             const dayReservations = showRes ? (Array.isArray(reservations) ? reservations : []).filter(r => r.status !== 'rejected' && r.dateStr.split(',').includes(dateStr)) : [];
-            const dayBlocks = showBlk ? (settings.blockedDays || []).filter(b => b.dateStr === dateStr) : [];
+            const dayBlocks = (settings.blockedDays || []).filter(b => b.dateStr === dateStr).filter(b => {
+              const t = b.type?.toLowerCase() || '';
+              if (t.includes('festiv') || t.includes('vacacion')) return allowedCats.includes('holidays');
+              if (t.includes('efemérid')) return allowedCats.includes('ephemeris');
+              if (t.includes('actividad') || t.includes('salida')) return allowedCats.includes('outings');
+              if (t.includes('familia')) return allowedCats.includes('family');
+              if (t.includes('evaluaci')) return allowedCats.includes('eval');
+              if (t.includes('boletin')) return allowedCats.includes('grades');
+              return allowedCats.includes('relevant');
+            });
             const isBaseHidden = settings.hiddenBaseEvents?.includes(dateStr);
             const baseEventRaw = !isBaseHidden ? specialEvents[dateStr] : null;
             
-            const isHoliday = baseEventRaw?.blockReservation === true;
-            const showBaseEvent = baseEventRaw && (isHoliday ? showHol : showEph);
-            const baseEvent = showBaseEvent ? baseEventRaw : null;
+            let baseEvent = null;
+            if (baseEventRaw) {
+               const title = baseEventRaw.title.toLowerCase();
+               if (baseEventRaw.blockReservation) {
+                  if (allowedCats.includes('holidays')) baseEvent = baseEventRaw;
+               } else if (title.includes('visita de familia')) {
+                  if (allowedCats.includes('family')) baseEvent = baseEventRaw;
+               } else if (title.includes('finaos') || title.includes('paz') || title.includes('erasmus')) {
+                  if (allowedCats.includes('ephemeris')) baseEvent = baseEventRaw;
+               } else {
+                  if (allowedCats.includes('relevant')) baseEvent = baseEventRaw;
+               }
+            }
             
             return (
               <div key={i} className={`border-r-[3px] border-b-[3px] border-slate-800 min-h-[160px] p-2 flex flex-col ${d.isCurrentRange ? 'bg-white' : 'bg-slate-100 opacity-60'}`}>

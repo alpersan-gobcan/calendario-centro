@@ -36,11 +36,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Fechas de inicio y fin requeridas." }, { status: 400 });
     }
     
-    const allowedCats = cats || ['res', 'eph', 'hol', 'blk'];
-    const showRes = allowedCats.includes('res');
-    const showEph = allowedCats.includes('eph');
-    const showHol = allowedCats.includes('hol');
-    const showBlk = allowedCats.includes('blk');
+    const allowedCats = cats || ['holidays', 'ephemeris', 'outings', 'family', 'eval', 'grades', 'relevant'];
+    const showRes = allowedCats.includes('outings');
 
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -71,14 +68,33 @@ export async function POST(request: Request) {
       const dateStr = `${current.getFullYear()}-${(current.getMonth() + 1).toString().padStart(2, '0')}-${current.getDate().toString().padStart(2, '0')}`;
       
       const dayRes = showRes ? safeReservations.filter((r: any) => r.dateStr.includes(dateStr) && r.status !== 'rejected') : [];
-      const dayBlocks = showBlk ? safeBlockedDays.filter((b: any) => b.dateStr === dateStr) : [];
+      const dayBlocks = safeBlockedDays.filter((b: any) => b.dateStr === dateStr).filter((b: any) => {
+        const t = b.type?.toLowerCase() || '';
+        if (t.includes('festiv') || t.includes('vacacion')) return allowedCats.includes('holidays');
+        if (t.includes('efemérid')) return allowedCats.includes('ephemeris');
+        if (t.includes('actividad') || t.includes('salida')) return allowedCats.includes('outings');
+        if (t.includes('familia')) return allowedCats.includes('family');
+        if (t.includes('evaluaci')) return allowedCats.includes('eval');
+        if (t.includes('boletin')) return allowedCats.includes('grades');
+        return allowedCats.includes('relevant');
+      });
       
       const isBaseHidden = hiddenBaseEvents.includes(dateStr);
       const baseEventRaw = !isBaseHidden ? specialEvents[dateStr] : null;
       
-      const isHoliday = baseEventRaw?.blockReservation === true;
-      const showBaseEvent = baseEventRaw && (isHoliday ? showHol : showEph);
-      const baseEvent = showBaseEvent ? baseEventRaw : null;
+      let baseEvent = null;
+      if (baseEventRaw) {
+         const title = baseEventRaw.title.toLowerCase();
+         if (baseEventRaw.blockReservation) {
+            if (allowedCats.includes('holidays')) baseEvent = baseEventRaw;
+         } else if (title.includes('visita de familia')) {
+            if (allowedCats.includes('family')) baseEvent = baseEventRaw;
+         } else if (title.includes('finaos') || title.includes('paz') || title.includes('erasmus')) {
+            if (allowedCats.includes('ephemeris')) baseEvent = baseEventRaw;
+         } else {
+            if (allowedCats.includes('relevant')) baseEvent = baseEventRaw;
+         }
+      }
 
       if (dayRes.length > 0 || dayBlocks.length > 0 || baseEvent) {
         hasEvents = true;

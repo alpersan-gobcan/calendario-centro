@@ -216,24 +216,20 @@ export default function AdminPage() {
   };
 
   const [isSendingReport, setIsSendingReport] = useState(false);
-  const [filterRes, setFilterRes] = useState(true);
-  const [filterEph, setFilterEph] = useState(true);
-  const [filterHol, setFilterHol] = useState(true);
-  const [filterBlk, setFilterBlk] = useState(true);
+  const [activeFilters, setActiveFilters] = useState<string[]>(['holidays', 'ephemeris', 'outings', 'family', 'eval', 'grades', 'relevant']);
+
+  const toggleFilter = (f: string) => {
+    setActiveFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
+  };
+
   const handleSendReport = async () => {
     if (!printStartDate || !printEndDate) return;
     setIsSendingReport(true);
     try {
-      const cats = [];
-      if (filterRes) cats.push('res');
-      if (filterEph) cats.push('eph');
-      if (filterHol) cats.push('hol');
-      if (filterBlk) cats.push('blk');
-
       const res = await fetch('/api/send-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ start: printStartDate, end: printEndDate, cats })
+        body: JSON.stringify({ start: printStartDate, end: printEndDate, cats: activeFilters })
       });
       const data = await res.json();
       if (data.success) {
@@ -663,20 +659,32 @@ export default function AdminPage() {
           
           <div className="flex flex-wrap gap-4 mb-6">
             <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-              <input type="checkbox" checked={filterRes} onChange={e => setFilterRes(e.target.checked)} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
-              Actividades y Salidas
-            </label>
-            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-              <input type="checkbox" checked={filterEph} onChange={e => setFilterEph(e.target.checked)} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
-              Efemérides y Días Relevantes
-            </label>
-            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-              <input type="checkbox" checked={filterHol} onChange={e => setFilterHol(e.target.checked)} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              <input type="checkbox" checked={activeFilters.includes('holidays')} onChange={() => toggleFilter('holidays')} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
               Festivos y Vacaciones
             </label>
             <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-              <input type="checkbox" checked={filterBlk} onChange={e => setFilterBlk(e.target.checked)} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
-              Días Bloqueados (Administrador)
+              <input type="checkbox" checked={activeFilters.includes('ephemeris')} onChange={() => toggleFilter('ephemeris')} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              Efemérides
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={activeFilters.includes('outings')} onChange={() => toggleFilter('outings')} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              Salidas
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={activeFilters.includes('family')} onChange={() => toggleFilter('family')} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              Visita de Familias
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={activeFilters.includes('eval')} onChange={() => toggleFilter('eval')} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              Sesiones de Evaluación
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={activeFilters.includes('grades')} onChange={() => toggleFilter('grades')} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              Entrega de Boletines
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={activeFilters.includes('relevant')} onChange={() => toggleFilter('relevant')} className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+              Días Relevantes
             </label>
           </div>
           
@@ -691,28 +699,14 @@ export default function AdminPage() {
             </div>
             <div className="flex flex-col gap-2">
               <button 
-                onClick={() => {
-                  const cats = [];
-                  if (filterRes) cats.push('res');
-                  if (filterEph) cats.push('eph');
-                  if (filterHol) cats.push('hol');
-                  if (filterBlk) cats.push('blk');
-                  window.open(`/print?start=${printStartDate}&end=${printEndDate}&cats=${cats.join(',')}`, '_blank');
-                }}
+                onClick={() => window.open(`/print?start=${printStartDate}&end=${printEndDate}&cats=${activeFilters.join(',')}`, '_blank')}
                 disabled={!printStartDate || !printEndDate}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm disabled:opacity-50 transition h-[42px] whitespace-nowrap text-sm"
               >
                 Descarga PDF / PNG
               </button>
               <button 
-                onClick={() => {
-                  const cats = [];
-                  if (filterRes) cats.push('res');
-                  if (filterEph) cats.push('eph');
-                  if (filterHol) cats.push('hol');
-                  if (filterBlk) cats.push('blk');
-                  window.open(`/print-yearly?cats=${cats.join(',')}`, '_blank');
-                }}
+                onClick={() => window.open(`/print-yearly?cats=${activeFilters.join(',')}`, '_blank')}
                 className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition h-[42px] whitespace-nowrap text-sm"
               >
                 📅 Exportar Curso Completo
