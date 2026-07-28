@@ -28,10 +28,20 @@ const specialEvents: Record<string, { title: string, details: string, blockReser
   "2027-05-29": { title: "Libre disposición", details: "Día de libre disposición.", blockReservation: true, color: "emerald" },
 };
 
-function chunkArray(arr: any[], size: number) {
-  const res = [];
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const res: T[][] = [];
   for(let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
   return res;
+}
+
+interface DayData {
+  date: Date;
+  isCurrentMonth: boolean;
+}
+
+interface MonthData {
+  title: string;
+  days: DayData[];
 }
 
 function YearlyPrintContent() {
@@ -61,7 +71,7 @@ function YearlyPrintContent() {
   const dayNames = ["L", "M", "X", "J", "V", "S", "D"];
 
   // Generar de Septiembre 2026 a Junio 2027
-  const monthsData = [];
+  const monthsData: MonthData[] = [];
   for (let m = 0; m < 10; m++) {
     // 8 = Septiembre
     let month = 8 + m;
@@ -137,7 +147,7 @@ function YearlyPrintContent() {
 
                   {/* Cuadrícula */}
                   <div className="grid grid-cols-7 bg-white">
-                    {m.days.map((d, i) => {
+                    {m.days.map((d: DayData, i: number) => {
                       const dateStr = `${d.date.getFullYear()}-${(d.date.getMonth()+1).toString().padStart(2,'0')}-${d.date.getDate().toString().padStart(2,'0')}`;
                       const dayReservations = showRes ? (Array.isArray(reservations) ? reservations : []).filter(r => r.status !== 'rejected' && r.dateStr.split(',').includes(dateStr)) : [];
                       const dayBlocks = showBlk ? (settings.blockedDays || []).filter(b => b.dateStr === dateStr) : [];
