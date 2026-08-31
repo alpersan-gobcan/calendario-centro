@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { store, Reservation, Settings } from "@/lib/store";
+import { useState, useMemo } from "react";
+import { Reservation, Settings } from "@/lib/store";
 
 // Mismos días especiales
 const specialEvents: Record<string, { title: string, details: string, blockReservation?: boolean, color: string, type: string }> = {
@@ -67,10 +67,10 @@ const months = [
 
 const dayNames = ["L", "M", "X", "J", "V", "S", "D"];
 
-export default function YearlyCalendar() {
+export default function YearlyCalendar({ initialReservations = [], initialSettings = { minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] } }: { initialReservations?: Reservation[], initialSettings?: Settings }) {
   const [modalEvent, setModalEvent] = useState<{ dateStr: string, title: string, details?: string, dayEvents?: { title: string, details: string, type: string, color: string }[] } | null>(null);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [], hiddenBaseEvents: [] });
+  const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
+  const [settings, setSettings] = useState<Settings>(initialSettings);
   const [showFilters, setShowFilters] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
 
@@ -109,30 +109,9 @@ export default function YearlyCalendar() {
     "Días Restringidos": { type: "restringidos", color: "orange", filterKey: "restringidos" },
   };
 
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    Promise.all([
-      store.getReservations(),
-      store.getSettings()
-    ]).then(([res, set]) => {
-      setReservations(res);
-      setSettings(set);
-      setIsLoading(false);
-    });
-  }, []);
-
   const getFormatDateStr = (year: number, month: number, day: number) => {
     return `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full relative">
@@ -245,116 +224,119 @@ export default function YearlyCalendar() {
             const jsDay = new Date(m.year, m.month, 1).getDay();
             const firstDayOfMonth = (jsDay + 6) % 7;
 
-          // Combinar eventos especiales y reservas para la leyenda y render
-          let eventsInMonth: {dateStr: string, title: string, details: string, color: string, type: string}[] = [];
-          
-          if (filters.festivos || filters.efemerides) {
-            Object.entries(specialEvents).forEach(([dateStr, evt]) => {
-              if (settings.hiddenBaseEvents?.includes(dateStr)) return;
-              const d = new Date(dateStr);
-              if (d.getFullYear() === m.year && d.getMonth() === m.month) {
-                if ((evt.type === 'festivo' && filters.festivos) || (evt.type === 'efemeride' && filters.efemerides)) {
-                  eventsInMonth.push({ dateStr, title: evt.title, details: evt.details, color: evt.color, type: evt.type });
-                }
-              }
-            });
-          }
-
-          if (settings.blockedDays) {
-            settings.blockedDays.forEach(b => {
-              const d = new Date(b.dateStr);
-              if (d.getFullYear() === m.year && d.getMonth() === m.month) {
-                 const typeStr = b.type || "Días relevantes";
-                 let catKey = "Días relevantes";
-                 
-                 const lowerType = typeStr.toLowerCase();
-                 if (lowerType.includes("festivo") || lowerType.includes("vacaciones")) catKey = "Festivos y Vacaciones";
-                 else if (lowerType.includes("efeméride") || lowerType.includes("efemeride")) catKey = "Efemérides";
-                 else if (lowerType.includes("familia")) catKey = "Visita de Familias";
-                 else if (lowerType.includes("evaluaci")) catKey = "Sesiones de evaluación";
-                 else if (lowerType.includes("boletin")) catKey = "Entrega de Boletines";
-                 else if (lowerType.includes("salida") || lowerType.includes("actividad")) catKey = "Actividades";
-                 else if (lowerType.includes("restringido")) catKey = "Días Restringidos";
-
-                 const cat = categoryMap[catKey] || categoryMap["Días relevantes"];
-                 if (filters[cat.filterKey]) {
-                    eventsInMonth.push({
-                      dateStr: b.dateStr,
-                      title: b.reason || b.type || "Día significativo",
-                      details: b.reason || "Día significativo marcado por el centro",
-                      color: cat.color,
-                      type: cat.type
-                    });
-                 }
-              }
-            });
-          }
-
-          if (filters.salidas) {
-            const safeReservations = Array.isArray(reservations) ? reservations.filter(r => r.status !== 'rejected') : [];
-            safeReservations.forEach(r => {
-              const dates = r.dateStr.split(',');
-              const groupsArray = r.group.split(', ');
-              const groupTitle = groupsArray.length > 1 ? `${groupsArray.length} Grupos` : r.group;
-              const status = r.status || "pending";
-              
-              dates.forEach(dStr => {
-                const d = new Date(dStr);
+          const monthData = useMemo(() => {
+            let eventsInMonth: {dateStr: string, title: string, details: string, color: string, type: string}[] = [];
+            
+            if (filters.festivos || filters.efemerides) {
+              Object.entries(specialEvents).forEach(([dateStr, evt]) => {
+                if (settings.hiddenBaseEvents?.includes(dateStr)) return;
+                const d = new Date(dateStr);
                 if (d.getFullYear() === m.year && d.getMonth() === m.month) {
-                  let transportInfo = `Salida del centro: ${r.transportDepartureTime}`;
-                  if (r.needsTransport) {
-                    transportInfo += `\nRecogida guagua: ${r.transportReturnTime}`;
+                  if ((evt.type === 'festivo' && filters.festivos) || (evt.type === 'efemeride' && filters.efemerides)) {
+                    eventsInMonth.push({ dateStr, title: evt.title, details: evt.details, color: evt.color, type: evt.type });
                   }
-                  let details = `Actividad: ${r.activity} (${r.location || 'Sin lugar'})\nGrupos: ${r.group}\nAlumnos: ${r.studentsCount}\n${transportInfo}\nLlegada al centro: ${r.arrivalTime}\nEstado: ${status === "confirmed" ? "Aceptada" : "Pendiente"}`;
-                  eventsInMonth.push({ 
-                    dateStr: dStr, 
-                    title: `Actividad\n${groupTitle}`, 
-                    details: details, 
-                    color: status === "confirmed" ? "cyan" : "slate", 
-                    type: "salida" 
-                  });
                 }
               });
-            });
-          }
+            }
 
-          eventsInMonth.sort((a, b) => new Date(a.dateStr).getDate() - new Date(b.dateStr).getDate());
+            if (settings.blockedDays) {
+              settings.blockedDays.forEach(b => {
+                const d = new Date(b.dateStr);
+                if (d.getFullYear() === m.year && d.getMonth() === m.month) {
+                   const typeStr = b.type || "Días relevantes";
+                   let catKey = "Días relevantes";
+                   
+                   const lowerType = typeStr.toLowerCase();
+                   if (lowerType.includes("festivo") || lowerType.includes("vacaciones")) catKey = "Festivos y Vacaciones";
+                   else if (lowerType.includes("efeméride") || lowerType.includes("efemeride")) catKey = "Efemérides";
+                   else if (lowerType.includes("familia")) catKey = "Visita de Familias";
+                   else if (lowerType.includes("evaluaci")) catKey = "Sesiones de evaluación";
+                   else if (lowerType.includes("boletin")) catKey = "Entrega de Boletines";
+                   else if (lowerType.includes("salida") || lowerType.includes("actividad")) catKey = "Actividades";
+                   else if (lowerType.includes("restringido")) catKey = "Días Restringidos";
 
-          // Agrupar eventos consecutivos del mismo tipo (ej. vacaciones) para la leyenda
-          const groupedLegendEvents: (typeof eventsInMonth[0] & { startDay: number, endDay: number })[] = [];
-          if (eventsInMonth.length > 0) {
-            let currentGroup = { 
-              ...eventsInMonth[0],
-              startDay: new Date(eventsInMonth[0].dateStr).getDate(),
-              endDay: new Date(eventsInMonth[0].dateStr).getDate()
-            };
-            
-            for (let i = 1; i < eventsInMonth.length; i++) {
-              const evt = eventsInMonth[i];
-              const dayNum = new Date(evt.dateStr).getDate();
+                   const cat = categoryMap[catKey] || categoryMap["Días relevantes"];
+                   if (filters[cat.filterKey]) {
+                      eventsInMonth.push({
+                        dateStr: b.dateStr,
+                        title: b.reason || b.type || "Día significativo",
+                        details: b.reason || "Día significativo marcado por el centro",
+                        color: cat.color,
+                        type: cat.type
+                      });
+                   }
+                }
+              });
+            }
+
+            if (filters.salidas) {
+              const safeReservations = Array.isArray(reservations) ? reservations.filter(r => r.status !== 'rejected') : [];
+              safeReservations.forEach(r => {
+                const dates = r.dateStr.split(',');
+                const groupsArray = r.group.split(', ');
+                const groupTitle = groupsArray.length > 1 ? `${groupsArray.length} Grupos` : r.group;
+                const status = r.status || "pending";
+                
+                dates.forEach(dStr => {
+                  const d = new Date(dStr);
+                  if (d.getFullYear() === m.year && d.getMonth() === m.month) {
+                    let transportInfo = `Salida del centro: ${r.transportDepartureTime}`;
+                    if (r.needsTransport) {
+                      transportInfo += `\nRecogida guagua: ${r.transportReturnTime}`;
+                    }
+                    let details = `Actividad: ${r.activity} (${r.location || 'Sin lugar'})\nGrupos: ${r.group}\nAlumnos: ${r.studentsCount}\n${transportInfo}\nLlegada al centro: ${r.arrivalTime}\nEstado: ${status === "confirmed" ? "Aceptada" : "Pendiente"}`;
+                    eventsInMonth.push({ 
+                      dateStr: dStr, 
+                      title: `Actividad\n${groupTitle}`, 
+                      details: details, 
+                      color: status === "confirmed" ? "cyan" : "slate", 
+                      type: "salida" 
+                    });
+                  }
+                });
+              });
+            }
+
+            eventsInMonth.sort((a, b) => new Date(a.dateStr).getDate() - new Date(b.dateStr).getDate());
+
+            const groupedLegendEvents: (typeof eventsInMonth[0] & { startDay: number, endDay: number })[] = [];
+            if (eventsInMonth.length > 0) {
+              let currentGroup = { 
+                ...eventsInMonth[0],
+                startDay: new Date(eventsInMonth[0].dateStr).getDate(),
+                endDay: new Date(eventsInMonth[0].dateStr).getDate()
+              };
               
-              if (evt.title === currentGroup.title && dayNum === currentGroup.endDay + 1 && evt.type !== "salida") {
-                currentGroup.endDay = dayNum;
-              } else {
-                groupedLegendEvents.push(currentGroup);
-                currentGroup = { 
-                  ...evt,
-                  startDay: dayNum,
-                  endDay: dayNum
-                };
+              for (let i = 1; i < eventsInMonth.length; i++) {
+                const evt = eventsInMonth[i];
+                const dayNum = new Date(evt.dateStr).getDate();
+                
+                if (evt.title === currentGroup.title && dayNum === currentGroup.endDay + 1 && evt.type !== "salida") {
+                  currentGroup.endDay = dayNum;
+                } else {
+                  groupedLegendEvents.push(currentGroup);
+                  currentGroup = { 
+                    ...evt,
+                    startDay: dayNum,
+                    endDay: dayNum
+                  };
+                }
               }
+              groupedLegendEvents.push(currentGroup);
             }
-            groupedLegendEvents.push(currentGroup);
-          }
 
-          // Crear diccionario para acceso rápido en el render del grid
-          const eventsDict: Record<string, any[]> = {};
-          eventsInMonth.forEach(e => {
-            if (!eventsDict[e.dateStr]) {
-              eventsDict[e.dateStr] = [];
-            }
-            eventsDict[e.dateStr].push(e);
-          });
+            const eventsDict: Record<string, any[]> = {};
+            eventsInMonth.forEach(e => {
+              if (!eventsDict[e.dateStr]) {
+                eventsDict[e.dateStr] = [];
+              }
+              eventsDict[e.dateStr].push(e);
+            });
+
+            return { eventsInMonth, groupedLegendEvents, eventsDict };
+          }, [m.year, m.month, filters, reservations, settings.blockedDays, settings.hiddenBaseEvents]);
+
+          const { eventsInMonth, groupedLegendEvents, eventsDict } = monthData;
 
           const monthKey = `${m.year}-${m.month}`;
           const isExpanded = expandedMonths[monthKey];

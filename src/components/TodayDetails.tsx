@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { store, Reservation, Settings } from "@/lib/store";
+import { Reservation, Settings } from "@/lib/store";
 
 const specialEvents: Record<string, { title: string, details: string, color: string }> = {
   "2026-09-08": { title: "Día del Pino", details: "Festivo Día del Pino.", color: "rose" },
@@ -29,21 +28,9 @@ const specialEvents: Record<string, { title: string, details: string, color: str
 
 // Vacaciones borradas a petición del usuario.
 
-export default function TodayDetails() {
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [] });
-  const [isLoading, setIsLoading] = useState(true);
-  
-  useEffect(() => {
-    Promise.all([
-      store.getReservations(),
-      store.getSettings()
-    ]).then(([res, set]) => {
-      setReservations(res);
-      setSettings(set);
-      setIsLoading(false);
-    });
-  }, []);
+export default function TodayDetails({ initialReservations = [], initialSettings = { minDaysNotice: 7, blockedDays: [] } }: { initialReservations?: Reservation[], initialSettings?: Settings }) {
+  const reservations = initialReservations;
+  const settings = initialSettings;
 
   const today = new Date();
   const dateStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
@@ -56,14 +43,6 @@ export default function TodayDetails() {
   
   const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   const formattedDate = today.toLocaleDateString('es-ES', options);
-
-  if (isLoading) {
-    return (
-      <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-3xl shadow-sm border border-blue-100 mb-6 w-full max-w-7xl mx-auto px-4 lg:px-8 flex justify-center items-center min-h-[150px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-3xl shadow-sm border border-blue-100 mb-6 w-full max-w-7xl mx-auto px-4 lg:px-8">
