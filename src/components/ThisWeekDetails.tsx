@@ -68,45 +68,47 @@ export default function ThisWeekDetails({ initialReservations = [], initialSetti
   return (
     <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-3xl shadow-sm border border-emerald-100 mb-6 w-full max-w-7xl mx-auto px-4 lg:px-8">
       <h3 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-4 capitalize">Semana en Curso</h3>
-      <div className="space-y-4">
+      <div className="flex overflow-x-auto gap-4 pb-4 snap-x">
         {weekEvents.length > 0 ? (
           weekEvents.map(({ date, dateStr, dayEvent, adminBlock, dayReservations }) => (
-            <div key={dateStr} className="border-l-4 border-emerald-400 pl-4 py-2">
-              <h4 className="text-lg font-semibold text-slate-700 capitalize mb-2">{date.toLocaleDateString('es-ES', options)}</h4>
+            <div key={dateStr} className="min-w-[280px] max-w-[320px] flex-shrink-0 flex flex-col bg-slate-50/50 rounded-2xl border border-slate-200 p-4 snap-start border-t-4 border-t-emerald-400 shadow-sm">
+              <h4 className="text-md font-semibold text-slate-700 capitalize mb-3 pb-2 border-b border-slate-200">
+                {date.toLocaleDateString('es-ES', options)}
+              </h4>
               
-              <div className="space-y-3">
+              <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar" style={{ maxHeight: '400px' }}>
                 {/* Eventos especiales */}
                 {dayEvent && (
-                  <div className="flex items-start gap-3 bg-amber-50 p-3 rounded-xl border border-amber-100">
-                     <div className="text-xl">🗓️</div>
+                  <div className="flex items-start gap-2 bg-amber-50 p-3 rounded-xl border border-amber-100">
+                     <div className="text-lg leading-none mt-0.5">🗓️</div>
                      <div>
-                       <p className="font-bold text-amber-900">{dayEvent.title}</p>
-                       <p className="text-sm text-amber-800">{dayEvent.details}</p>
+                       <p className="font-bold text-amber-900 text-sm leading-tight">{dayEvent.title}</p>
+                       <p className="text-xs text-amber-800 mt-1">{dayEvent.details}</p>
                      </div>
                   </div>
                 )}
 
                 {/* Bloqueos de admin */}
                 {adminBlock && (
-                  <div className="flex items-start gap-3 bg-rose-50 p-3 rounded-xl border border-rose-100">
-                     <div className="text-xl">🛑</div>
+                  <div className="flex items-start gap-2 bg-rose-50 p-3 rounded-xl border border-rose-100">
+                     <div className="text-lg leading-none mt-0.5">🛑</div>
                      <div>
-                       <p className="font-bold text-rose-900">Bloqueado</p>
-                       <p className="text-sm text-rose-800">{adminBlock.reason}</p>
+                       <p className="font-bold text-rose-900 text-sm leading-tight">Bloqueado</p>
+                       <p className="text-xs text-rose-800 mt-1">{adminBlock.reason}</p>
                      </div>
                   </div>
                 )}
 
                 {/* Reservas */}
                 {dayReservations.length > 0 && (
-                  <div className="flex items-start gap-3 bg-blue-50 p-3 rounded-xl border border-blue-100">
-                     <div className="text-xl">🚌</div>
+                  <div className="flex items-start gap-2 bg-blue-50 p-3 rounded-xl border border-blue-100">
+                     <div className="text-lg leading-none mt-0.5">🚌</div>
                      <div className="w-full">
                        <div className="space-y-2">
                          {dayReservations.map(r => (
                            <div key={r.id} className="bg-white p-2 rounded-lg border border-blue-200 shadow-sm">
-                             <p className="font-bold text-slate-800 text-sm">{r.group} - {r.activity}</p>
-                             <p className="text-xs text-slate-600">Por {r.name} ({r.studentsCount} alumnos)</p>
+                             <p className="font-bold text-slate-800 text-xs leading-tight">{r.group} - {r.activity}</p>
+                             <p className="text-[11px] text-slate-600 mt-1">Por {r.name} ({r.studentsCount} alumnos)</p>
                            </div>
                          ))}
                        </div>
@@ -117,7 +119,7 @@ export default function ThisWeekDetails({ initialReservations = [], initialSetti
             </div>
           ))
         ) : (
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-3">
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-3 w-full">
              <div className="text-2xl">📅</div>
              <p className="text-slate-600 font-medium">No hay eventos ni actividades programadas para esta semana.</p>
           </div>
