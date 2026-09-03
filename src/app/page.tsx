@@ -1,5 +1,6 @@
 import YearlyCalendar from "@/components/YearlyCalendar";
 import TodayDetails from "@/components/TodayDetails";
+import ThisWeekDetails from "@/components/ThisWeekDetails";
 import { supabase } from "@/lib/supabase";
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,10 @@ export default async function Home() {
 
       <section>
         <TodayDetails initialReservations={reservations} initialSettings={settings} />
+      </section>
+
+      <section>
+        <ThisWeekDetails initialReservations={reservations} initialSettings={settings} />
       </section>
 
       <section>
