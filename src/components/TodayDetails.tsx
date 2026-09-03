@@ -37,7 +37,7 @@ export default function TodayDetails({ initialReservations = [], initialSettings
   
   const isBaseHidden = settings.hiddenBaseEvents?.includes(dateStr);
   const todayEvent = isBaseHidden ? undefined : specialEvents[dateStr];
-  const adminBlock = settings.blockedDays?.find(b => b.dateStr === dateStr);
+  const adminBlocks = settings.blockedDays?.filter(b => b.dateStr === dateStr) || [];
   const safeReservations = Array.isArray(reservations) ? reservations.filter(r => r.status !== 'rejected') : [];
   const todayReservations = safeReservations.filter(r => r.dateStr.includes(dateStr));
   
@@ -61,15 +61,15 @@ export default function TodayDetails({ initialReservations = [], initialSettings
         )}
 
         {/* Bloqueos de admin */}
-        {adminBlock && (
-          <div className="flex items-start gap-3 bg-rose-50 p-4 rounded-xl border border-rose-100">
+        {adminBlocks.length > 0 && adminBlocks.map((block, idx) => (
+          <div key={`block-${idx}`} className="flex items-start gap-3 bg-rose-50 p-4 rounded-xl border border-rose-100">
              <div className="text-2xl">🛑</div>
              <div>
                <p className="font-bold text-rose-900 text-lg">Día Significativo / Bloqueado</p>
-               <p className="text-rose-800">{adminBlock.reason}</p>
+               <p className="text-rose-800">{block.reason}</p>
              </div>
           </div>
-        )}
+        ))}
 
         {/* Reservas */}
         {todayReservations.length > 0 ? (
@@ -89,7 +89,7 @@ export default function TodayDetails({ initialReservations = [], initialSettings
              </div>
           </div>
         ) : (
-          !todayEvent && !adminBlock && (
+          !todayEvent && adminBlocks.length === 0 && (
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-3">
                <div className="text-2xl">📅</div>
                <p className="text-slate-600 font-medium">No hay eventos ni actividades programadas para el día de hoy.</p>
