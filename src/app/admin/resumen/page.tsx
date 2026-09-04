@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { store, Reservation, Settings } from "@/lib/store";
 
 const specialEvents: Record<string, { title: string, details: string, blockReservation?: boolean, color: string }> = {
@@ -54,6 +54,10 @@ export default function ResumenPage() {
   
   const [currentMonthDate, setCurrentMonthDate] = useState<Date>(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
 
+  const dayScrollRef = useRef<HTMLDivElement>(null);
+  const weekScrollRef = useRef<HTMLDivElement>(null);
+  const monthScrollRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const load = async () => {
       const res = await store.getReservations();
@@ -62,6 +66,32 @@ export default function ResumenPage() {
       setSettings(st);
     };
     load();
+  }, []);
+
+  // AUTO-SCROLL LOGIC
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const scrollDown = (el: HTMLDivElement | null) => {
+        if (!el) return;
+        const { scrollTop, scrollHeight, clientHeight } = el;
+        // If content fits without scrolling, do nothing
+        if (scrollHeight <= clientHeight) return;
+        
+        // If we reached the bottom (with a small margin of error)
+        if (scrollTop + clientHeight >= scrollHeight - 5) {
+          el.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          // Scroll down by 50% of the visible container height
+          el.scrollBy({ top: clientHeight * 0.5, left: 0, behavior: 'smooth' });
+        }
+      };
+
+      scrollDown(dayScrollRef.current);
+      scrollDown(weekScrollRef.current);
+      scrollDown(monthScrollRef.current);
+    }, 4500); // Every 4.5 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   const getEventsForDay = (dateStr: string) => {
@@ -74,9 +104,9 @@ export default function ResumenPage() {
   };
 
   const renderEventBadge = (color: string, label: string, title: string, details?: string) => (
-    <div className={`p-3 rounded-lg border ${getColorClass(color)} mb-2 shadow-sm`}>
+    <div className={`p-3 rounded-xl border ${getColorClass(color)} mb-2 shadow-sm`}>
         <div className="text-[10px] font-bold uppercase opacity-70 mb-1">{label}</div>
-        <div className="font-bold text-sm">{title}</div>
+        <div className="font-bold text-sm md:text-base leading-tight">{title}</div>
         {details && <div className="text-xs opacity-80 mt-1">{details}</div>}
     </div>
   );
@@ -86,7 +116,7 @@ export default function ResumenPage() {
     const totalEvents = events.res.length + events.blocks.length + (events.base ? 1 : 0);
     
     if (totalEvents === 0) {
-        return <div className="text-sm text-slate-400 italic p-2 bg-slate-50 rounded-lg border border-slate-100 text-center">Sin eventos</div>;
+        return <div className="text-sm text-slate-400 italic p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">Sin eventos</div>;
     }
 
     return (
@@ -110,11 +140,12 @@ export default function ResumenPage() {
 
   const renderSchematicEventsForDate = (dateStr: string) => {
     const events = getEventsForDay(dateStr);
+    
     return (
-        <div className="space-y-1 mt-1">
-            {events.base && <div className="text-xs truncate flex items-center gap-1.5 font-medium text-slate-700"><span className={`w-2 h-2 rounded-full shrink-0 ${getDotColor(events.base.color)}`}></span> {events.base.title}</div>}
-            {events.blocks.map((b, idx) => <div key={idx} className="text-xs truncate flex items-center gap-1.5 font-medium text-slate-700"><span className="w-2 h-2 rounded-full shrink-0 bg-emerald-500"></span> {b.reason || b.type || 'Bloqueado'}</div>)}
-            {events.res.map(r => <div key={r.id} className="text-xs truncate flex items-center gap-1.5 font-medium text-slate-700"><span className={`w-2 h-2 rounded-full shrink-0 ${getDotColor(getEventColor(r))}`}></span> {r.group} - {r.activity}</div>)}
+        <div className="space-y-1.5 mt-1.5">
+            {events.base && <div className="text-xs md:text-sm flex items-start gap-2 font-medium text-slate-700"><span className={`w-2 h-2 mt-1 rounded-full shrink-0 ${getDotColor(events.base.color)}`}></span> <span>{events.base.title}</span></div>}
+            {events.blocks.map((b, idx) => <div key={idx} className="text-xs md:text-sm flex items-start gap-2 font-medium text-slate-700"><span className="w-2 h-2 mt-1 rounded-full shrink-0 bg-emerald-500"></span> <span>{b.reason || b.type || 'Bloqueado'}</span></div>)}
+            {events.res.map(r => <div key={r.id} className="text-xs md:text-sm flex items-start gap-2 font-medium text-slate-700"><span className={`w-2 h-2 mt-1 rounded-full shrink-0 ${getDotColor(getEventColor(r))}`}></span> <span>{r.group} - {r.activity}</span></div>)}
         </div>
     );
   };
@@ -149,37 +180,33 @@ export default function ResumenPage() {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-100 p-2 md:p-4 flex flex-col h-[100dvh] overflow-hidden">
-      <div className="flex-1 flex flex-col w-full space-y-4 h-full">
-        <div className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-slate-200 shrink-0">
-            <h1 className="text-xl md:text-2xl font-black text-slate-800">Vista Resumen</h1>
-            <div className="text-sm font-medium text-slate-500 bg-slate-100 px-4 py-1.5 rounded-lg">
-                Seleccionado: {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </div>
-        </div>
+      <div className="flex-1 flex flex-col w-full space-y-2 h-full">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
             
             {/* COLUMN 1: DAY */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
-                <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-4 mb-4 shrink-0">Día: {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' })}</h2>
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
+                <h2 className="text-base md:text-xl font-bold text-slate-800 border-b border-slate-100 pb-3 mb-3 shrink-0">Día: {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' })}</h2>
+                <div ref={dayScrollRef} className="flex-1 overflow-y-auto pr-2 no-scrollbar">
                     {renderEventsForDate(selectedDateStr)}
                 </div>
             </div>
 
             {/* COLUMN 2: WEEK */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
-                <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-4 mb-4 shrink-0">Semana</h2>
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
+            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
+                <h2 className="text-base md:text-xl font-bold text-slate-800 border-b border-slate-100 pb-3 mb-3 shrink-0">Semana</h2>
+                <div ref={weekScrollRef} className="flex-1 overflow-y-auto pr-2 space-y-4 no-scrollbar">
                     {weekDays.map(date => {
                         const dateStr = getFormatDateStr(date.getFullYear(), date.getMonth(), date.getDate());
                         const isSelected = dateStr === selectedDateStr;
                         return (
-                            <div key={dateStr} className={`p-4 rounded-xl border ${isSelected ? 'border-blue-500 ring-2 ring-blue-100 shadow-sm' : 'border-slate-100'} bg-white`}>
-                                <h3 className={`font-bold capitalize mb-3 text-sm ${isSelected ? 'text-blue-800' : 'text-slate-700'}`}>
+                            <div key={dateStr} className={`p-4 flex flex-col rounded-xl border ${isSelected ? 'border-blue-500 ring-2 ring-blue-100 shadow-sm' : 'border-slate-100'} bg-white`}>
+                                <h3 className={`font-bold capitalize mb-3 text-sm md:text-base shrink-0 ${isSelected ? 'text-blue-800' : 'text-slate-700'}`}>
                                     {date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' })}
                                 </h3>
-                                {renderEventsForDate(dateStr)}
+                                <div>
+                                    {renderEventsForDate(dateStr)}
+                                </div>
                             </div>
                         )
                     })}
@@ -187,17 +214,17 @@ export default function ResumenPage() {
             </div>
 
             {/* COLUMN 3: MONTH */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
-                <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-4 mb-4 shrink-0">Mes</h2>
+            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
+                <h2 className="text-base md:text-xl font-bold text-slate-800 border-b border-slate-100 pb-3 mb-3 shrink-0">Mes</h2>
                 
                 {/* Mini Calendar */}
-                <div className="mb-6 shrink-0">
-                    <div className="flex justify-between items-center mb-4 bg-slate-50 rounded-lg p-2 border border-slate-100">
+                <div className="mb-4 shrink-0">
+                    <div className="flex justify-between items-center mb-3 bg-slate-50 rounded-xl p-2 border border-slate-100">
                         <button onClick={() => setCurrentMonthDate(new Date(currentYear, currentMonth - 1, 1))} className="text-slate-400 hover:text-slate-800 hover:bg-slate-200 w-8 h-8 rounded-md transition">&larr;</button>
-                        <span className="font-bold text-sm text-slate-700">{monthNames[currentMonth]} {currentYear}</span>
+                        <span className="font-bold text-sm md:text-base text-slate-700">{monthNames[currentMonth]} {currentYear}</span>
                         <button onClick={() => setCurrentMonthDate(new Date(currentYear, currentMonth + 1, 1))} className="text-slate-400 hover:text-slate-800 hover:bg-slate-200 w-8 h-8 rounded-md transition">&rarr;</button>
                     </div>
-                    <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs text-slate-400 mb-2">
+                    <div className="grid grid-cols-7 gap-1 text-center font-bold text-[10px] md:text-xs text-slate-400 mb-1">
                         {["L", "M", "X", "J", "V", "S", "D"].map(d => <div key={d}>{d}</div>)}
                     </div>
                     <div className="grid grid-cols-7 gap-1">
@@ -209,9 +236,9 @@ export default function ResumenPage() {
                             const events = getEventsForDay(dateStr);
                             const hasEvents = events.res.length > 0 || events.blocks.length > 0 || events.base;
                             
-                            let btnClass = "text-sm p-1 rounded-md text-slate-600 aspect-square flex items-center justify-center font-medium border border-transparent";
-                            if (isSelected) btnClass = "text-sm p-1 rounded-md bg-blue-600 text-white font-bold aspect-square flex items-center justify-center shadow-md scale-105 transition";
-                            else if (hasEvents) btnClass = "text-sm p-1 rounded-md bg-purple-100 text-purple-900 font-bold border border-purple-200 aspect-square flex items-center justify-center hover:bg-purple-200";
+                            let btnClass = "text-xs md:text-sm p-1 rounded-md text-slate-600 aspect-square flex items-center justify-center font-medium border border-transparent";
+                            if (isSelected) btnClass = "text-xs md:text-sm p-1 rounded-md bg-blue-600 text-white font-bold aspect-square flex items-center justify-center shadow-md scale-105 transition";
+                            else if (hasEvents) btnClass = "text-xs md:text-sm p-1 rounded-md bg-purple-100 text-purple-900 font-bold border border-purple-200 aspect-square flex items-center justify-center hover:bg-purple-200";
                             else btnClass += " hover:bg-slate-100 hover:border-slate-200";
 
                             return (
@@ -228,9 +255,9 @@ export default function ResumenPage() {
                 </div>
 
                 {/* Events of the month */}
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                    <h3 className="font-bold text-slate-500 uppercase tracking-wider mb-3 text-xs border-b border-slate-100 pb-2 sticky top-0 bg-white z-10 pt-1">Eventos de {monthNames[currentMonth]}</h3>
-                    <div className="space-y-4">
+                <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <h3 className="font-bold text-slate-500 uppercase tracking-wider mb-2 text-xs border-b border-slate-100 pb-2 shrink-0">Eventos de {monthNames[currentMonth]}</h3>
+                    <div ref={monthScrollRef} className="flex-1 overflow-y-auto space-y-4 pr-2 no-scrollbar">
                         {Array.from({ length: daysInMonth }).map((_, i) => {
                             const day = i + 1;
                             const dateStr = getFormatDateStr(currentYear, currentMonth, day);
@@ -241,7 +268,7 @@ export default function ResumenPage() {
                             
                             return (
                                 <div key={dateStr} className="pl-3 border-l-2 border-slate-200">
-                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{day} {monthNames[currentMonth]}</div>
+                                    <div className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">{day} {monthNames[currentMonth]}</div>
                                     {renderSchematicEventsForDate(dateStr)}
                                 </div>
                             );
@@ -253,15 +280,14 @@ export default function ResumenPage() {
         </div>
       </div>
       <style dangerouslySetInnerHTML={{__html: `
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: #cbd5e1;
-            border-radius: 20px;
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
       `}} />
     </div>
