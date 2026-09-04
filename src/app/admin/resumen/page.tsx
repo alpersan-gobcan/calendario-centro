@@ -98,6 +98,27 @@ export default function ResumenPage() {
     );
   };
 
+  const getDotColor = (color: string) => {
+    switch (color) {
+      case 'rose': return 'bg-rose-500';
+      case 'amber': return 'bg-amber-500';
+      case 'emerald': return 'bg-emerald-500';
+      case 'purple': return 'bg-purple-500';
+      default: return 'bg-blue-500';
+    }
+  };
+
+  const renderSchematicEventsForDate = (dateStr: string) => {
+    const events = getEventsForDay(dateStr);
+    return (
+        <div className="space-y-1 mt-1">
+            {events.base && <div className="text-xs truncate flex items-center gap-1.5 font-medium text-slate-700"><span className={`w-2 h-2 rounded-full shrink-0 ${getDotColor(events.base.color)}`}></span> {events.base.title}</div>}
+            {events.blocks.map((b, idx) => <div key={idx} className="text-xs truncate flex items-center gap-1.5 font-medium text-slate-700"><span className="w-2 h-2 rounded-full shrink-0 bg-emerald-500"></span> {b.reason || b.type || 'Bloqueado'}</div>)}
+            {events.res.map(r => <div key={r.id} className="text-xs truncate flex items-center gap-1.5 font-medium text-slate-700"><span className={`w-2 h-2 rounded-full shrink-0 ${getDotColor(getEventColor(r))}`}></span> {r.group} - {r.activity}</div>)}
+        </div>
+    );
+  };
+
   // --- Day logic ---
   const selectedDateStr = getFormatDateStr(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
 
@@ -127,16 +148,16 @@ export default function ResumenPage() {
   const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8">
-      <div className="max-w-[1400px] mx-auto space-y-6">
-        <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-            <h1 className="text-2xl font-black text-slate-800">Vista Resumen</h1>
-            <div className="text-sm font-medium text-slate-500 bg-slate-100 px-4 py-2 rounded-lg">
+    <div className="fixed inset-0 z-50 bg-slate-100 p-2 md:p-4 flex flex-col h-[100dvh] overflow-hidden">
+      <div className="flex-1 flex flex-col w-full space-y-4 h-full">
+        <div className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-slate-200 shrink-0">
+            <h1 className="text-xl md:text-2xl font-black text-slate-800">Vista Resumen</h1>
+            <div className="text-sm font-medium text-slate-500 bg-slate-100 px-4 py-1.5 rounded-lg">
                 Seleccionado: {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[80vh]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
             
             {/* COLUMN 1: DAY */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
@@ -220,8 +241,8 @@ export default function ResumenPage() {
                             
                             return (
                                 <div key={dateStr} className="pl-3 border-l-2 border-slate-200">
-                                    <div className="text-xs font-bold text-slate-500 mb-2">{day} de {monthNames[currentMonth]}</div>
-                                    {renderEventsForDate(dateStr)}
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{day} {monthNames[currentMonth]}</div>
+                                    {renderSchematicEventsForDate(dateStr)}
                                 </div>
                             );
                         })}
