@@ -284,7 +284,7 @@ export default function YearlyCalendar({ initialReservations = [], initialSettin
                     if (r.needsTransport) {
                       transportInfo += `\nRecogida guagua: ${r.transportReturnTime}`;
                     }
-                    let details = `Actividad: ${r.activity} (${r.location || 'Sin lugar'})\nGrupos: ${r.group}\nAlumnos: ${r.studentsCount}\n${transportInfo}\nLlegada al centro: ${r.arrivalTime}\nEstado: ${status === "confirmed" ? "Aceptada" : "Pendiente"}`;
+                    let details = `Actividad: ${r.activity} (${r.location || 'Sin lugar'})\nGrupos: ${r.group}\nAlumnos: ${r.studentsCount}\nDocente: ${r.name}${r.otherTeachers ? `\nDocentes Acompañantes: ${r.otherTeachers}` : ''}\n${transportInfo}\nLlegada al centro: ${r.arrivalTime}\nEstado: ${status === "confirmed" ? "Aceptada" : "Pendiente"}`;
                     eventsInMonth.push({ 
                       dateStr: dStr, 
                       title: `Actividad\n${groupTitle}`, 

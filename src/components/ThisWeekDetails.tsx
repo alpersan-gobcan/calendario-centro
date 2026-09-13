@@ -122,7 +122,7 @@ export default function ThisWeekDetails({ initialReservations = [], initialSetti
                            {dayReservations.map(r => (
                              <div key={r.id} className="bg-white p-2 rounded-lg border border-blue-200 shadow-sm">
                                <p className="font-bold text-slate-800 text-[11px] lg:text-xs leading-tight">{r.group} - {r.activity}</p>
-                               <p className="text-[10px] text-slate-600 mt-0.5">Por {r.name} ({r.studentsCount} alu)</p>
+                               <p className="text-[10px] text-slate-600 mt-0.5">Por {r.name} ({r.studentsCount} alu){r.otherTeachers ? ` | Docentes Acompañantes: ${r.otherTeachers}` : ''}</p>
                              </div>
                            ))}
                          </div>

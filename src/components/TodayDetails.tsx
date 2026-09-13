@@ -81,7 +81,7 @@ export default function TodayDetails({ initialReservations = [], initialSettings
                  {todayReservations.map(r => (
                    <div key={r.id} className="bg-white p-3 rounded-lg border border-blue-200 shadow-sm">
                      <p className="font-bold text-slate-800">{r.group} - {r.activity}</p>
-                     <p className="text-sm text-slate-600 mt-1">Alumnos: {r.studentsCount} | Docentes: {r.name} {r.otherTeachers ? `, ${r.otherTeachers}` : ''}</p>
+                     <p className="text-sm text-slate-600 mt-1">Alumnos: {r.studentsCount} | Docente: {r.name}{r.otherTeachers ? ` | Docentes Acompañantes: ${r.otherTeachers}` : ''}</p>
                      <p className="text-sm text-slate-600 mt-1">Salida centro: {r.transportDepartureTime} | Llegada est.: {r.arrivalTime}</p>
                    </div>
                  ))}
