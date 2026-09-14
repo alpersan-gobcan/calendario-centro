@@ -47,6 +47,14 @@ const getEventColor = (r: Reservation) => {
     return 'blue';
 };
 
+const getEventTime = (r: Reservation) => {
+    const start = r.transportDepartureTime || r.arrivalTime || '';
+    const end = r.transportReturnTime || '';
+    if (start && end) return `[${start} - ${end}]`;
+    if (start) return `[${start}]`;
+    return '';
+};
+
 export default function ResumenPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [settings, setSettings] = useState<Settings>({ minDaysNotice: 7, blockedDays: [] });
@@ -125,7 +133,9 @@ export default function ResumenPage() {
             {events.blocks.map((b, idx) => renderEventBadge('emerald', 'Bloqueo Manual', b.reason || b.type || 'Bloqueado', undefined))}
             {events.res.map(r => {
                 const teachers = r.otherTeachers ? ` (Acompañantes: ${r.otherTeachers})` : '';
-                return renderEventBadge(getEventColor(r), 'Reserva', r.group, `${r.activity} - ${r.location} - Resp: ${r.name}${teachers}`);
+                const timeStr = getEventTime(r);
+                const prefix = timeStr ? `${timeStr} ` : '';
+                return renderEventBadge(getEventColor(r), 'Reserva', r.group, `${prefix}${r.activity} - ${r.location} - Resp: ${r.name}${teachers}`);
             })}
         </div>
     );
@@ -150,7 +160,9 @@ export default function ResumenPage() {
             {events.blocks.map((b, idx) => <div key={idx} className="text-xs md:text-sm flex items-start gap-2 font-medium text-slate-700"><span className="w-2 h-2 mt-1 rounded-full shrink-0 bg-emerald-500"></span> <span>{b.reason || b.type || 'Bloqueado'}</span></div>)}
             {events.res.map(r => {
                 const teachers = r.otherTeachers ? ` (Acompañantes: ${r.otherTeachers})` : '';
-                return <div key={r.id} className="text-xs md:text-sm flex items-start gap-2 font-medium text-slate-700"><span className={`w-2 h-2 mt-1 rounded-full shrink-0 ${getDotColor(getEventColor(r))}`}></span> <span>{r.group} - {r.activity} - Resp: {r.name}{teachers}</span></div>;
+                const timeStr = getEventTime(r);
+                const prefix = timeStr ? `${timeStr} ` : '';
+                return <div key={r.id} className="text-xs md:text-sm flex items-start gap-2 font-medium text-slate-700"><span className={`w-2 h-2 mt-1 rounded-full shrink-0 ${getDotColor(getEventColor(r))}`}></span> <span>{prefix}{r.group} - {r.activity} - Resp: {r.name}{teachers}</span></div>;
             })}
         </div>
     );
@@ -186,6 +198,18 @@ export default function ResumenPage() {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-100 p-2 md:p-4 flex flex-col h-[100dvh] overflow-hidden">
+      
+      {/* Botón de recarga manual */}
+      <button 
+        onClick={() => window.location.reload()}
+        className="absolute top-2 right-2 md:top-4 md:right-4 z-50 text-slate-300 hover:text-slate-500 p-2 rounded-full transition-colors"
+        title="Recargar datos"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+
       <div className="flex-1 flex flex-col w-full space-y-2 h-full">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
