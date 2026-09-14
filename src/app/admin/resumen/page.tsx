@@ -123,7 +123,10 @@ export default function ResumenPage() {
         <div className="space-y-2">
             {events.base && renderEventBadge(events.base.color, 'Base', events.base.title, events.base.details)}
             {events.blocks.map((b, idx) => renderEventBadge('emerald', 'Bloqueo Manual', b.reason || b.type || 'Bloqueado', undefined))}
-            {events.res.map(r => renderEventBadge(getEventColor(r), 'Reserva', r.group, `${r.activity} - ${r.location}`))}
+            {events.res.map(r => {
+                const teachers = r.otherTeachers ? ` (Acompañantes: ${r.otherTeachers})` : '';
+                return renderEventBadge(getEventColor(r), 'Reserva', r.group, `${r.activity} - ${r.location} - Resp: ${r.name}${teachers}`);
+            })}
         </div>
     );
   };
@@ -145,7 +148,10 @@ export default function ResumenPage() {
         <div className="space-y-1.5 mt-1.5">
             {events.base && <div className="text-xs md:text-sm flex items-start gap-2 font-medium text-slate-700"><span className={`w-2 h-2 mt-1 rounded-full shrink-0 ${getDotColor(events.base.color)}`}></span> <span>{events.base.title}</span></div>}
             {events.blocks.map((b, idx) => <div key={idx} className="text-xs md:text-sm flex items-start gap-2 font-medium text-slate-700"><span className="w-2 h-2 mt-1 rounded-full shrink-0 bg-emerald-500"></span> <span>{b.reason || b.type || 'Bloqueado'}</span></div>)}
-            {events.res.map(r => <div key={r.id} className="text-xs md:text-sm flex items-start gap-2 font-medium text-slate-700"><span className={`w-2 h-2 mt-1 rounded-full shrink-0 ${getDotColor(getEventColor(r))}`}></span> <span>{r.group} - {r.activity}</span></div>)}
+            {events.res.map(r => {
+                const teachers = r.otherTeachers ? ` (Acompañantes: ${r.otherTeachers})` : '';
+                return <div key={r.id} className="text-xs md:text-sm flex items-start gap-2 font-medium text-slate-700"><span className={`w-2 h-2 mt-1 rounded-full shrink-0 ${getDotColor(getEventColor(r))}`}></span> <span>{r.group} - {r.activity} - Resp: {r.name}{teachers}</span></div>;
+            })}
         </div>
     );
   };
