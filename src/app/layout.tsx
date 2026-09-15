@@ -9,12 +9,17 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Calendario del Centro",
   description: "Gestor de reservas y efemérides",
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
+  },
   appleWebApp: {
     title: "Calendario IES",
     statusBarStyle: "default",
     capable: true,
   },
 };
+
 
 export default function RootLayout({
   children,
