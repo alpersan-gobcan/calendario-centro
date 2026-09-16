@@ -37,7 +37,14 @@ export const store = {
       const res = await fetch('/api/reservations');
       if (!res.ok) return []; // Return empty silently on API errors
       const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      if (Array.isArray(data)) {
+        return data.sort((a, b) => {
+          const timeA = a.transportDepartureTime || "";
+          const timeB = b.transportDepartureTime || "";
+          return timeA.localeCompare(timeB);
+        });
+      }
+      return [];
     } catch (e) {
       return [];
     }

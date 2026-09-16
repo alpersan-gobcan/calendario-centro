@@ -52,7 +52,11 @@ export async function POST(request: Request) {
     if (setError && setError.code !== 'PGRST116') throw setError;
     const settings = setRow ? setRow.data : { blockedDays: [], hiddenBaseEvents: [] };
 
-    const safeReservations = Array.isArray(resData) ? resData : [];
+    const safeReservations = Array.isArray(resData) ? resData.sort((a: any, b: any) => {
+      const timeA = a.transportDepartureTime || "";
+      const timeB = b.transportDepartureTime || "";
+      return timeA.localeCompare(timeB);
+    }) : [];
     const safeBlockedDays = Array.isArray(settings.blockedDays) ? settings.blockedDays : [];
     const hiddenBaseEvents = Array.isArray(settings.hiddenBaseEvents) ? settings.hiddenBaseEvents : [];
 
