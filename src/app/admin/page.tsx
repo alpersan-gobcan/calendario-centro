@@ -789,7 +789,7 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Hora de salida del centro</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Hora de salida del centro / Inicio actividad en el centro</label>
                   <input 
                     type="time" 
                     value={editForm.transportDepartureTime || ""} 
@@ -798,7 +798,7 @@ export default function AdminPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Hora est. de llegada</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Hora est. de llegada / Fin actividad en el centro.</label>
                   <input 
                     type="time" 
                     value={editForm.arrivalTime || ""} 

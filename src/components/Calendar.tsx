@@ -68,7 +68,7 @@ export default function Calendar() {
   // A partir de julio (6), ya cargamos el curso de ese año (ej: en julio 2026 cargamos 26/27).
   const schoolYearStart = currentMonthIdx < 6 ? currentYearActual - 1 : currentYearActual;
 
-  const [currentDate, setCurrentDate] = useState(new Date(schoolYearStart, 8, 1));
+  const [currentDate, setCurrentDate] = useState(today);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   
   // Datos del formulario
@@ -448,11 +448,11 @@ export default function Calendar() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col justify-end">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Hora de salida del centro <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Hora de salida del centro / Inicio actividad en el centro <span className="text-red-500">*</span></label>
               <input required type="time" value={formData.transportDepartureTime} onChange={e => setFormData({...formData, transportDepartureTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mt-auto" disabled={selectedDates.length === 0 || isSubmitting} />
             </div>
             <div className="flex flex-col justify-end">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Hora est. de llegada <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Hora est. de llegada / Fin actividad en el centro. <span className="text-red-500">*</span></label>
               <input required type="time" value={formData.arrivalTime} onChange={e => setFormData({...formData, arrivalTime: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mt-auto" disabled={selectedDates.length === 0 || isSubmitting} />
             </div>
           </div>
