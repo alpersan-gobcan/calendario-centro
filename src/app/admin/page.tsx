@@ -330,6 +330,9 @@ export default function AdminPage() {
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold text-slate-800">Panel de Configuración</h2>
         <div className="flex items-center gap-4">
+          <a href="/admin/estadisticas" className="text-emerald-700 hover:text-emerald-900 font-bold bg-emerald-50 px-4 py-2 rounded-lg border border-emerald-200 transition">
+            📊 Estadísticas
+          </a>
           <a href="/admin/resumen" className="text-blue-600 hover:text-blue-800 font-bold bg-blue-50 px-4 py-2 rounded-lg border border-blue-200 transition">
             Vista Resumen
           </a>
