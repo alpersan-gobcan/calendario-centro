@@ -73,6 +73,92 @@ const PASTEL_PALETTE = [
   { bg: "bg-cyan-200", fill: "#67e8f9", hover: "#22d3ee", border: "border-cyan-300", text: "text-cyan-900", badge: "bg-cyan-100 text-cyan-800" },
 ];
 
+// Utilidades para normalizar nombres y corregir errores/variaciones de docentes
+function cleanString(str: string): string {
+  return (str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // quita tildes
+    .replace(/[^a-z0-9\s]/g, " ")     // quita signos puntuación
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function levenshteinDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (a[i - 1] === b[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+      }
+    }
+  }
+  return dp[m][n];
+}
+
+function areTeachersSame(
+  rawName1: string,
+  email1: string,
+  rawName2: string,
+  email2: string
+): boolean {
+  // 1. Si tienen el mismo email no vacío, son la misma persona sin duda
+  const em1 = (email1 || "").trim().toLowerCase();
+  const em2 = (email2 || "").trim().toLowerCase();
+  if (em1 && em2 && em1 === em2) {
+    return true;
+  }
+
+  const s1 = cleanString(rawName1);
+  const s2 = cleanString(rawName2);
+  if (!s1 || !s2) return false;
+  if (s1 === s2) return true;
+
+  const words1 = s1.split(" ").filter((w) => w.length > 1);
+  const words2 = s2.split(" ").filter((w) => w.length > 1);
+  if (words1.length === 0 || words2.length === 0) return false;
+
+  // Si comparten primer nombre y primer apellido
+  if (words1.length >= 2 && words2.length >= 2) {
+    const fn1 = words1[0];
+    const fn2 = words2[0];
+    const ln1 = words1[1];
+    const ln2 = words2[1];
+
+    const fnDist = levenshteinDistance(fn1, fn2);
+    const lnDist = levenshteinDistance(ln1, ln2);
+
+    // Mismo nombre y mismo apellido con margen de 1 errata
+    if (fnDist <= 1 && lnDist <= 1) {
+      // Caso un apellido vs dos apellidos: "Juan Perez" vs "Juan Perez Gonzalez"
+      return true;
+    }
+  }
+
+  // Si todas las palabras de uno están contenidas en el otro (ej. "Maria Sanchez" y "Maria Sanchez Dominguez")
+  const isSubset1in2 = words1.length >= 2 && words1.every((w) => words2.includes(w));
+  const isSubset2in1 = words2.length >= 2 && words2.every((w) => words1.includes(w));
+  if (isSubset1in2 || isSubset2in1) {
+    return true;
+  }
+
+  // Distancia de Levenshtein global muy pequeña en frases completas (errata leve)
+  const maxLen = Math.max(s1.length, s2.length);
+  if (maxLen > 6) {
+    const globalDist = levenshteinDistance(s1, s2);
+    if (globalDist <= 2) return true;
+  }
+
+  return false;
+}
+
 type PeriodMode = "year" | "trimester" | "month";
 
 export default function EstadisticasAdminPage() {
@@ -121,6 +207,67 @@ export default function EstadisticasAdminPage() {
     }
   };
 
+  // Mapa global de normalización de docentes para que coincidan variantes de nombres
+  const teacherCanonicalMap = useMemo(() => {
+    // Lista de pares { rawName, email } únicos
+    const uniqueRaw: { name: string; email: string }[] = [];
+    reservations.forEach((r) => {
+      const name = (r.name || "Sin especificar").trim();
+      const email = (r.email || "").trim();
+      if (!uniqueRaw.some((item) => item.name === name && item.email === email)) {
+        uniqueRaw.push({ name, email });
+      }
+    });
+
+    // Agrupar en clusters de mismo docente
+    const clusters: { canonicalName: string; aliases: string[]; emails: string[] }[] = [];
+
+    uniqueRaw.forEach(({ name, email }) => {
+      let matchedCluster = clusters.find((cluster) =>
+        cluster.aliases.some((aliasName, idx) =>
+          areTeachersSame(name, email, aliasName, cluster.emails[idx] || "")
+        )
+      );
+
+      if (matchedCluster) {
+        matchedCluster.aliases.push(name);
+        matchedCluster.emails.push(email);
+        // Si el nombre nuevo tiene más letras o más apellidos, elegirlo como canónico
+        if (name.length > matchedCluster.canonicalName.length) {
+          matchedCluster.canonicalName = name;
+        }
+      } else {
+        clusters.push({
+          canonicalName: name,
+          aliases: [name],
+          emails: [email],
+        });
+      }
+    });
+
+    // Mapeo de cualquier variante (o email) -> canonicalName
+    const lookup: Record<string, string> = {};
+    clusters.forEach((cluster) => {
+      cluster.aliases.forEach((alias) => {
+        lookup[alias.toLowerCase()] = cluster.canonicalName;
+      });
+      cluster.emails.forEach((em) => {
+        if (em) lookup[em.toLowerCase()] = cluster.canonicalName;
+      });
+    });
+
+    return {
+      getCanonicalName: (name: string, email?: string) => {
+        const cleanN = (name || "Sin especificar").trim().toLowerCase();
+        const cleanE = (email || "").trim().toLowerCase();
+        if (cleanE && lookup[cleanE]) return lookup[cleanE];
+        if (lookup[cleanN]) return lookup[cleanN];
+        return (name || "Sin especificar").trim();
+      },
+      clusters,
+    };
+  }, [reservations]);
+
   // Filtrado principal de reservas según periodo, estado y filtros interactivos
   const filteredReservations = useMemo(() => {
     return reservations.filter((r) => {
@@ -130,7 +277,8 @@ export default function EstadisticasAdminPage() {
       if (transportFilter === "without" && r.needsTransport) return false;
 
       if (selectedTeacherFilter) {
-        if (r.name.trim().toLowerCase() !== selectedTeacherFilter.toLowerCase()) return false;
+        const canonical = teacherCanonicalMap.getCanonicalName(r.name, r.email);
+        if (canonical.toLowerCase() !== selectedTeacherFilter.toLowerCase()) return false;
       }
 
       if (selectedLevelFilter) {
@@ -166,6 +314,7 @@ export default function EstadisticasAdminPage() {
     periodMode,
     selectedMonth,
     selectedTrimester,
+    teacherCanonicalMap,
   ]);
 
   // Etiqueta descriptiva del periodo activo
@@ -352,13 +501,14 @@ export default function EstadisticasAdminPage() {
     return list;
   }, [filteredReservations, groupSortBy]);
 
-  // 5. Ranking de Docentes
+  // 5. Ranking de Docentes (con normalización inteligente de nombres)
   const teacherData = useMemo(() => {
     const map: Record<
       string,
       {
         name: string;
         email: string;
+        rawAliases: string[];
         count: number;
         withBus: number;
         withoutBus: number;
@@ -368,18 +518,23 @@ export default function EstadisticasAdminPage() {
     > = {};
 
     filteredReservations.forEach((r) => {
-      const cleanName = (r.name || "Sin especificar").trim();
-      const key = cleanName.toLowerCase();
+      const canonicalName = teacherCanonicalMap.getCanonicalName(r.name, r.email);
+      const key = canonicalName.toLowerCase();
       if (!map[key]) {
         map[key] = {
-          name: cleanName,
+          name: canonicalName,
           email: r.email || "",
+          rawAliases: [],
           count: 0,
           withBus: 0,
           withoutBus: 0,
           totalStudents: 0,
           activities: [],
         };
+      }
+      const rawTrim = (r.name || "").trim();
+      if (rawTrim && !map[key].rawAliases.includes(rawTrim)) {
+        map[key].rawAliases.push(rawTrim);
       }
       map[key].count += 1;
       if (r.needsTransport) map[key].withBus += 1;
@@ -389,7 +544,7 @@ export default function EstadisticasAdminPage() {
     });
 
     return Object.values(map).sort((a, b) => b.count - a.count || b.totalStudents - a.totalStudents);
-  }, [filteredReservations]);
+  }, [filteredReservations, teacherCanonicalMap]);
 
   // 6. Alumnado en salidas concretas
   const concreteActivitiesData = useMemo(() => {
@@ -1049,7 +1204,14 @@ export default function EstadisticasAdminPage() {
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-sm font-bold text-slate-500 w-6 shrink-0">{medal}</span>
-                        <span className="font-bold text-slate-800 text-sm truncate">{t.name}</span>
+                        <div className="truncate">
+                          <span className="font-bold text-slate-800 text-sm block truncate">{t.name}</span>
+                          {t.rawAliases.length > 1 && (
+                            <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
+                              {t.rawAliases.length} variantes unificadas
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-xs text-slate-500">🎓 {t.totalStudents} alu.</span>
