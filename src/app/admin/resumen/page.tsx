@@ -103,7 +103,7 @@ export default function ResumenPage() {
   }, []);
 
   const getEventsForDay = (dateStr: string) => {
-    const res = reservations.filter(r => r.dateStr === dateStr);
+    const res = reservations.filter(r => r.dateStr.split(',').map(d => d.trim()).includes(dateStr));
     const blocks = (settings.blockedDays || []).filter(b => b.dateStr === dateStr);
     const isBaseHidden = settings.hiddenBaseEvents?.includes(dateStr);
     const base = isBaseHidden ? null : specialEvents[dateStr];

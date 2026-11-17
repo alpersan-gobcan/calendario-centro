@@ -20,8 +20,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params;
   const body = await request.json();
   
-  // Clean up body to not update id
-  const { id: _id, ...updateData } = body;
+  // Clean up body to not update id or client-only fields
+  const { id: _id, createdAt: _createdAt, warnings: _warnings, ...updateData } = body;
   
   const { error } = await supabase
     .from('reservations')

@@ -56,9 +56,27 @@ export default function AdminPage() {
 
   const handleSaveEdit = async () => {
     if (!editingReservation) return;
+    const cleanedDates = Array.from(
+      new Set(
+        (editForm.dateStr || "")
+          .split(",")
+          .map((d) => d.trim())
+          .filter(Boolean)
+      )
+    ).sort();
+
+    if (cleanedDates.length === 0) {
+      alert("Por favor, selecciona al menos una fecha válida para la actividad.");
+      return;
+    }
+
     try {
       const isRejected = editingReservation.status === 'rejected';
-      const updatedForm = isRejected ? { ...editForm, status: 'confirmed' as const } : editForm;
+      const updatedForm: Partial<Reservation> = {
+        ...editForm,
+        dateStr: cleanedDates.join(","),
+        ...(isRejected ? { status: 'confirmed' as const } : {})
+      };
       
       await store.updateReservationData(editingReservation.id, updatedForm);
       setReservations(prev => prev.map(r => r.id === editingReservation.id ? { ...r, ...updatedForm } as Reservation : r));
@@ -738,6 +756,61 @@ export default function AdminPage() {
             <h2 className="text-2xl font-bold text-slate-800 mb-4 border-b pb-2">Editar Reserva</h2>
             <div className="overflow-y-auto pr-2 space-y-4 flex-grow">
               
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-800">📅 Fecha(s) de la actividad</label>
+                    <p className="text-xs text-slate-500">
+                      Al cambiar el día, la actividad se eliminará de la fecha anterior y se moverá con toda su información al nuevo día seleccionado.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentDates = (editForm.dateStr || "").split(",").map(d => d.trim());
+                      setEditForm(prev => ({ ...prev, dateStr: [...currentDates, ""].join(",") }));
+                    }}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition whitespace-nowrap"
+                  >
+                    + Añadir día
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {(() => {
+                    const datesList = (editForm.dateStr ?? "").split(",").map(d => d.trim());
+                    const safeList = datesList.length > 0 ? datesList : [""];
+                    return safeList.map((dVal, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={dVal}
+                          onChange={(e) => {
+                            const updated = [...safeList];
+                            updated[idx] = e.target.value;
+                            setEditForm(prev => ({ ...prev, dateStr: updated.join(",") }));
+                          }}
+                          className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-800"
+                        />
+                        {safeList.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = safeList.filter((_, i) => i !== idx);
+                              setEditForm(prev => ({ ...prev, dateStr: updated.join(",") }));
+                            }}
+                            className="px-3 py-2 text-red-600 hover:bg-red-50 border border-red-200 rounded-lg text-xs font-bold transition"
+                            title="Quitar este día"
+                          >
+                            ✕ Quitar
+                          </button>
+                        )}
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Actividad</label>
